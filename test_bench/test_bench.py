@@ -155,7 +155,7 @@ def main():
 
     # Print the list of tuples
     #print(input_files)
-    pumpkin_command = f"MZN_SOLVER_PATH=/home/user/Documents/Pumpkin/minizinc minizinc --solver /home/user/Documents/Pumpkin/minizinc/pumpkin.msc --output-time --statistics --output-objective --time-limit {timeout_secs * 1000}"
+    pumpkin_command = f"MZN_SOLVER_PATH=../minizinc minizinc --solver ../minizinc/pumpkin.msc --output-time --statistics --output-objective --time-limit {timeout_secs * 1000}"
 
     commands = [
         ("decomp",f"{pumpkin_command}", []),

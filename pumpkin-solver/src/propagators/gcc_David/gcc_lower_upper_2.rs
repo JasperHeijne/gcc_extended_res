@@ -3,8 +3,10 @@ use log::debug;
 use crate::{
     basic_types::Inconsistency, create_statistics_struct, engine::{
         propagation::{LocalId, Propagator, ReadDomains}, DomainEvents
-    }, predicate, predicates::PropositionalConjunction, propagators::global_cardinality::{max_count, min_count}, variables::IntegerVariable
+    }, predicate, predicates::PropositionalConjunction, propagators::gcc_David::{max_count, min_count}, variables::IntegerVariable
 };
+
+use crate::engine::cp::propagation::contexts::PropagationContextWithTrailedValues;
 
 use super::Values;
 // local ids of array vars are shifted by ID_X_OFFSET
@@ -128,7 +130,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
 
     fn notify(
         &mut self,
-        _context: crate::engine::propagation::PropagationContext,
+        _context: PropagationContextWithTrailedValues,
         _local_id: LocalId,
         _event: crate::engine::opaque_domain_event::OpaqueDomainEvent,
     ) -> crate::engine::propagation::EnqueueDecision {

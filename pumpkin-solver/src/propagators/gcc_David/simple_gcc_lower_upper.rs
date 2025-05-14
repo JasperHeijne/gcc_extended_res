@@ -7,9 +7,11 @@ use crate::{
         DomainEvents,
     },
     predicates::{Predicate, PropositionalConjunction},
-    propagators::global_cardinality::*,
+    propagators::gcc_David::*,
     variables::IntegerVariable,
 };
+
+use crate::engine::cp::propagation::contexts::PropagationContextWithTrailedValues;
 
 use super::Values;
 
@@ -99,7 +101,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for SimpleGCCLowerUpper<Var
 
     fn notify(
         &mut self,
-        _context: crate::engine::propagation::PropagationContext,
+        _context: PropagationContextWithTrailedValues,
         _local_id: LocalId,
         _event: crate::engine::opaque_domain_event::OpaqueDomainEvent,
     ) -> crate::engine::propagation::EnqueueDecision {
@@ -125,7 +127,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for SimpleGCCLowerUpper<Var
 
     fn detect_inconsistency(
         &self,
-        _context: crate::engine::propagation::PropagationContext,
+        _context: PropagationContextWithTrailedValues,
     ) -> Option<PropositionalConjunction> {
         None
     }

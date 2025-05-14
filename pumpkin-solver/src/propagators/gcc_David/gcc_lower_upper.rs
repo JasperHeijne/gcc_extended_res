@@ -6,11 +6,13 @@ use petgraph::{
     algo::has_path_connecting, graph::{DiGraph, NodeIndex}, prelude::EdgeIndex, visit::EdgeRef, Graph
 };
 
+use crate::engine::cp::propagation::contexts::PropagationContextWithTrailedValues;
+
 use crate::{
     basic_types::{HashSet, Inconsistency}, create_statistics_struct, engine::{
         propagation::{LocalId, Propagator, ReadDomains},
         DomainEvents,
-    }, predicate, predicates::PropositionalConjunction, propagators::global_cardinality::*, variables::IntegerVariable
+    }, predicate, predicates::PropositionalConjunction, propagators::gcc_David::*, variables::IntegerVariable
 };
 
 use super::{ford_fulkerson_lower_bounds::BoundedCapacity, Values};
@@ -560,7 +562,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
 
     fn notify(
         &mut self,
-        _context: crate::engine::propagation::PropagationContext,
+        _context: PropagationContextWithTrailedValues,
         _local_id: LocalId,
         _event: crate::engine::opaque_domain_event::OpaqueDomainEvent,
     ) -> crate::engine::propagation::EnqueueDecision {
@@ -592,7 +594,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
 
 #[cfg(test)]
 mod tests {
-    use crate::{engine::test_solver::TestSolver, propagators::global_cardinality::Values};
+    use crate::{engine::test_solver::TestSolver, propagators::gcc_David::Values};
 
     use super::GCCLowerUpper;
 

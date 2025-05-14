@@ -1,7 +1,7 @@
 
 
 use crate::{
-    propagators::global_cardinality::{
+    propagators::gcc_David::{
         gcc_lower_upper::GCCLowerUpper,
         gcc_lower_upper_2::GCCLowerUpper2,
         simple_gcc_lower_upper::SimpleGCCLowerUpper,
@@ -11,7 +11,7 @@ use crate::{
 
 use super::Constraint;
 
-pub use crate::propagators::global_cardinality::Values;
+pub use crate::propagators::gcc_David::Values;
 
 #[derive(Clone, Copy,  Debug)]
 pub enum GccMethod {

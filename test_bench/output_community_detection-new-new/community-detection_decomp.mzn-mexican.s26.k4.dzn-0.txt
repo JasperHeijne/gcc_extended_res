@@ -1,0 +1,49 @@
+% Generated FlatZinc statistics:
+%%%mzn-stat: paths=0
+%%%mzn-stat: flatBoolVars=400
+%%%mzn-stat: flatIntVars=498
+%%%mzn-stat: flatIntConstraints=920
+%%%mzn-stat: evaluatedReifiedConstraints=400
+%%%mzn-stat: method="maximize"
+%%%mzn-stat: flatTime=0.134898
+%%%mzn-stat-end
+%%%mzn-stat: 1AutonomousSearchNumBackupCalled=421
+%%%mzn-stat: 1AutonomousSearchNumPredicatesRemoved=0
+%%%mzn-stat: 1AutonomousSearchNumCalls=492
+%%%mzn-stat: 1AutonomousSearchNumPredicatesAdded=2554
+%%%mzn-stat: 1AutonomousSearchAverageSizeOfHeap=126.48170731707317
+%%%mzn-stat: 1AutonomousSearchNumAssignedPredicatesEncountered=36952
+%%%mzn-stat: engineStatisticsNumDecisions=1652800
+%%%mzn-stat: engineStatisticsNumConflicts=1638758
+%%%mzn-stat: engineStatisticsNumRestarts=0
+%%%mzn-stat: engineStatisticsNumPropagations=177200090
+%%%mzn-stat: engineStatisticsTimeSpentInSolver=176930
+%%%mzn-stat: learnedClauseStatisticsAverageConflictSize=30.83867162733706
+%%%mzn-stat: learnedClauseStatisticsAverageNumberOfRemovedLiteralsRecursive=15.154528706818644
+%%%mzn-stat: learnedClauseStatisticsAverageNumberOfRemovedLiteralsSemantic=2.4481506410041267
+%%%mzn-stat: learnedClauseStatisticsNumUnitClausesLearned=22
+%%%mzn-stat: learnedClauseStatisticsAverageLearnedClauseLength=32.21067919160681
+%%%mzn-stat: learnedClauseStatisticsAverageBacktrackAmount=1.0082849379133088
+%%%mzn-stat: learnedClauseStatisticsAverageLbd=8.967488947267253
+%%%mzn-stat-end
+x = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 2, 3, 1, 3, 3, 2, 2, 3, 2, 2, 3, 2, 2, 2, 2, 2];
+objective = 715070;
+% time elapsed: 177.10 s
+----------
+==========
+% time elapsed: 177.10 s
+%%%mzn-stat: engineStatisticsNumDecisions=1652800
+%%%mzn-stat: engineStatisticsNumConflicts=1638758
+%%%mzn-stat: engineStatisticsNumRestarts=0
+%%%mzn-stat: engineStatisticsNumPropagations=177200090
+%%%mzn-stat: engineStatisticsTimeSpentInSolver=176930
+%%%mzn-stat: learnedClauseStatisticsAverageConflictSize=30.83867162733706
+%%%mzn-stat: learnedClauseStatisticsAverageNumberOfRemovedLiteralsRecursive=15.154528706818644
+%%%mzn-stat: learnedClauseStatisticsAverageNumberOfRemovedLiteralsSemantic=2.4481506410041267
+%%%mzn-stat: learnedClauseStatisticsNumUnitClausesLearned=22
+%%%mzn-stat: learnedClauseStatisticsAverageLearnedClauseLength=32.21067919160681
+%%%mzn-stat: learnedClauseStatisticsAverageBacktrackAmount=1.0082849379133088
+%%%mzn-stat: learnedClauseStatisticsAverageLbd=8.967488947267253
+%%%mzn-stat-end
+%%%mzn-stat: nSolutions=1
+%%%mzn-stat-end

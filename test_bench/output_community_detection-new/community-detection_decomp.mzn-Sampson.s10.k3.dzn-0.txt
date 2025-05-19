@@ -1,0 +1,16 @@
+% Generated FlatZinc statistics:
+%%%mzn-stat: paths=0
+%%%mzn-stat: flatBoolVars=250
+%%%mzn-stat: flatIntVars=322
+%%%mzn-stat: flatIntConstraints=581
+%%%mzn-stat: evaluatedReifiedConstraints=250
+%%%mzn-stat: method="maximize"
+%%%mzn-stat: flatTime=0.0836436
+%%%mzn-stat-end
+%%%mzn-stat: engineStatisticsNumDecisions=6605395
+%%%mzn-stat: engineStatisticsNumConflicts=6601594
+%%%mzn-stat: engineStatisticsNumRestarts=0
+=====UNKNOWN=====
+% time elapsed: 8577.95 s
+%%%mzn-stat: nSolutions=0
+%%%mzn-stat-end

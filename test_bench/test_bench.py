@@ -245,3 +245,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+# ../mzn-challenge/2017/community-detection.mzn ../mzn-challenge/2017/dolphin.s62.k3.dzn
+# ../mzn-challenge/2017/community-detection.mzn ../mzn-challenge/2017/mexican.s26.k4.dzn
+# ../mzn-challenge/2017/community-detection.mzn ../mzn-challenge/2017/Sampson.s10.k3.dzn
+# ../mzn-challenge/2017/community-detection.mzn ../mzn-challenge/2017/Strike.s2.k8.dzn
+# ../mzn-challenge/2017/community-detection.mzn ../mzn-challenge/2017/Strike.s6.k5.dzn

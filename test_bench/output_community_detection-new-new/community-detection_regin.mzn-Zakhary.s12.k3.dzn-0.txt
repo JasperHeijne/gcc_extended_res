@@ -1,0 +1,27 @@
+% Generated FlatZinc statistics:
+%%%mzn-stat: paths=0
+%%%mzn-stat: flatBoolVars=406
+%%%mzn-stat: flatIntVars=502
+%%%mzn-stat: flatIntConstraints=919
+%%%mzn-stat: evaluatedReifiedConstraints=406
+%%%mzn-stat: method="maximize"
+%%%mzn-stat: flatTime=0.0919149
+%%%mzn-stat-end
+%%%mzn-stat: engineStatisticsNumDecisions=4811151
+%%%mzn-stat: engineStatisticsNumConflicts=4803647
+%%%mzn-stat: engineStatisticsNumRestarts=7
+%%%mzn-stat: engineStatisticsNumPropagations=596155999
+%%%mzn-stat: engineStatisticsTimeSpentInSolver=599842
+%%%mzn-stat: learnedClauseStatisticsAverageConflictSize=88.8899987863388
+%%%mzn-stat: learnedClauseStatisticsAverageNumberOfRemovedLiteralsRecursive=58.75507421756844
+%%%mzn-stat: learnedClauseStatisticsAverageNumberOfRemovedLiteralsSemantic=1.4657565387298441
+%%%mzn-stat: learnedClauseStatisticsNumUnitClausesLearned=0
+%%%mzn-stat: learnedClauseStatisticsAverageLearnedClauseLength=46.43055266134252
+%%%mzn-stat: learnedClauseStatisticsAverageBacktrackAmount=1.0011928436873068
+%%%mzn-stat: learnedClauseStatisticsAverageLbd=15.867280630737438
+%%%mzn-stat: globalCardinalityLowUpNumber106=Statistics { test: 0 }
+%%%mzn-stat-end
+=====UNKNOWN=====
+% time elapsed: 599.99 s
+%%%mzn-stat: nSolutions=0
+%%%mzn-stat-end

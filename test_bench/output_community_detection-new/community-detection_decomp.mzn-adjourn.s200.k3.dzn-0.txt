@@ -1,0 +1,11 @@
+Warning: model inconsistency detected: domain is empty
+/Users/didodimitrov/Documents/gcc_extended_res/test_bench/temp_directory/community-detection_decomp.mzn:40.1-23
+  in variable declaration for 'objective'
+
+% Generated FlatZinc statistics:
+%%%mzn-stat: paths=0
+%%%mzn-stat: method="satisfy"
+%%%mzn-stat: flatTime=0.0881645
+%%%mzn-stat-end
+=====UNSATISFIABLE=====
+% time elapsed: 0.09 s

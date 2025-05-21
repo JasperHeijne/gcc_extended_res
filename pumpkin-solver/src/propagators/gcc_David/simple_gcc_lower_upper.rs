@@ -1,19 +1,16 @@
 use log::debug;
 
-use crate::{
-    basic_types::Inconsistency,
-    engine::{
-        propagation::{LocalId, Propagator, ReadDomains},
-        DomainEvents,
-    },
-    predicates::{Predicate, PropositionalConjunction},
-    propagators::gcc_David::*,
-    variables::IntegerVariable,
-};
-
-use crate::engine::cp::propagation::contexts::PropagationContextWithTrailedValues;
-
 use super::Values;
+use crate::basic_types::Inconsistency;
+use crate::engine::cp::propagation::contexts::PropagationContextWithTrailedValues;
+use crate::engine::propagation::LocalId;
+use crate::engine::propagation::Propagator;
+use crate::engine::propagation::ReadDomains;
+use crate::engine::DomainEvents;
+use crate::predicates::Predicate;
+use crate::predicates::PropositionalConjunction;
+use crate::propagators::gcc_David::*;
+use crate::variables::IntegerVariable;
 
 // local ids of array vars are shifted by ID_X_OFFSET
 const ID_X_OFFSET: u32 = 2;
@@ -48,7 +45,8 @@ impl<Variable: IntegerVariable + 'static> Propagator for SimpleGCCLowerUpper<Var
             );
         });
 
-        // Wait until the search fixes all values, and then check if the assignment satisfies the constraint of the propagator.
+        // Wait until the search fixes all values, and then check if the assignment satisfies the
+        // constraint of the propagator.
         if self.variables.iter().all(|var| context.is_fixed(var))
             && !self.values.iter().all(|value| {
                 vars_satisfy_value(
@@ -60,9 +58,10 @@ impl<Variable: IntegerVariable + 'static> Propagator for SimpleGCCLowerUpper<Var
                 )
             })
         {
-            // If the assignment satisfied the GCC, just return OK(()). This means a valid solution is found, or not all variables have been assigned.
-            // If not, need to use an explanation so that the solver knows this assignment is not valid?
-            //TODO: Implement the explanation for an error.
+            // If the assignment satisfied the GCC, just return OK(()). This means a valid solution
+            // is found, or not all variables have been assigned. If not, need to use an
+            // explanation so that the solver knows this assignment is not valid?
+            // TODO: Implement the explanation for an error.
 
             debug!("all values fixed");
             return Err(Inconsistency::Conflict(conjunction_all_vars(
@@ -88,7 +87,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for SimpleGCCLowerUpper<Var
         });
 
         // Register for backtrack events if needed with:
-        //context.register_for_backtrack_events(var, domain_events, local_id);
+        // context.register_for_backtrack_events(var, domain_events, local_id);
         Ok(())
     }
 

@@ -1,11 +1,16 @@
 #[allow(unused)]
 use ford_fulkerson_lower_bounds::BoundedCapacity;
-use petgraph::{graph::{DiGraph, EdgeReference, NodeIndex}, visit::EdgeRef};
+use petgraph::graph::DiGraph;
+use petgraph::graph::EdgeReference;
+use petgraph::graph::NodeIndex;
+use petgraph::visit::EdgeRef;
 use rand::Rng;
 
-use crate::{
-    basic_types::HashMap, engine::propagation::ReadDomains, predicates::{Predicate, PropositionalConjunction}, variables::IntegerVariable
-};
+use crate::basic_types::HashMap;
+use crate::engine::propagation::ReadDomains;
+use crate::predicates::Predicate;
+use crate::predicates::PropositionalConjunction;
+use crate::variables::IntegerVariable;
 
 pub(crate) mod ford_fulkerson_lower_bounds;
 pub(crate) mod gcc_lower_upper;
@@ -19,8 +24,8 @@ pub struct Values {
     pub omax: u32,
 }
 
-
-/// Check if, in all variables with a fixed assignment `value` occurs at least `min` and at most `max` times.
+/// Check if, in all variables with a fixed assignment `value` occurs at least `min` and at most
+/// `max` times.
 fn vars_satisfy_value<Variable: IntegerVariable>(
     vars: &[Variable],
     value: i32,
@@ -36,7 +41,8 @@ fn vars_satisfy_value<Variable: IntegerVariable>(
     occurences >= min && occurences <= max
 }
 
-/// Return the most specific explanation possible: A conjunction describing the current domain of all given variables.
+/// Return the most specific explanation possible: A conjunction describing the current domain of
+/// all given variables.
 fn conjunction_all_vars<'a, I, Variable>(
     context: &crate::engine::propagation::PropagationContextMut,
     vars: I,
@@ -97,7 +103,13 @@ fn max_count<Variable: IntegerVariable>(
 /// The graph is optionally colored according to the strongly connected components.
 /// If supplied, the variable nodes are placed in the same rank, as well as the value nodes.
 /// If supplied, the inconsistent edges are drawn in red and dotted.
-fn graph_to_dot<N: ToString, E: std::fmt::Display>(graph: &DiGraph<N, E>, scc: &[Vec<NodeIndex>], variable_nodes: &Vec<NodeIndex>, value_nodes: &Vec<NodeIndex>, inconsistent_edges: &Vec<EdgeReference<BoundedCapacity>>) -> String {
+fn graph_to_dot<N: ToString, E: std::fmt::Display>(
+    graph: &DiGraph<N, E>,
+    scc: &[Vec<NodeIndex>],
+    variable_nodes: &Vec<NodeIndex>,
+    value_nodes: &Vec<NodeIndex>,
+    inconsistent_edges: &Vec<EdgeReference<BoundedCapacity>>,
+) -> String {
     let mut dot_string = String::new();
     dot_string.push_str("digraph {\n");
 
@@ -131,7 +143,10 @@ fn graph_to_dot<N: ToString, E: std::fmt::Display>(graph: &DiGraph<N, E>, scc: &
         let label = graph[node].to_string();
         let default_color = "black".to_string();
         let color = node_colors.get(&node).unwrap_or(&default_color);
-        dot_string.push_str(&format!("  {} [label=\"{}\", color=\"{}\"];\n", node_name, label, color));
+        dot_string.push_str(&format!(
+            "  {} [label=\"{}\", color=\"{}\"];\n",
+            node_name, label, color
+        ));
     }
 
     for edge in graph.edge_indices() {
@@ -144,7 +159,13 @@ fn graph_to_dot<N: ToString, E: std::fmt::Display>(graph: &DiGraph<N, E>, scc: &
         } else {
             ""
         };
-        dot_string.push_str(&format!("  {} -> {} [label=\"{}\"{}];\n", source_name, target_name, edge_r.weight(), edge_style));
+        dot_string.push_str(&format!(
+            "  {} -> {} [label=\"{}\"{}];\n",
+            source_name,
+            target_name,
+            edge_r.weight(),
+            edge_style
+        ));
     }
 
     dot_string.push_str("}\n");

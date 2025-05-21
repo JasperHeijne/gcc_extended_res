@@ -1,25 +1,16 @@
-
-
-use crate::{
-    propagators::gcc_David::{
-        gcc_lower_upper::GCCLowerUpper,
-        gcc_lower_upper_2::GCCLowerUpper2,
-        simple_gcc_lower_upper::SimpleGCCLowerUpper,
-    },
-    variables::IntegerVariable,
-};
-
 use super::Constraint;
-
+use crate::propagators::gcc_David::gcc_lower_upper::GCCLowerUpper;
+use crate::propagators::gcc_David::gcc_lower_upper_2::GCCLowerUpper2;
+use crate::propagators::gcc_David::simple_gcc_lower_upper::SimpleGCCLowerUpper;
 pub use crate::propagators::gcc_David::Values;
+use crate::variables::IntegerVariable;
 
-#[derive(Clone, Copy,  Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum GccMethod {
     Bruteforce,
     BasicFilter,
-    ReginArcConsistent
+    ReginArcConsistent,
 }
-
 
 impl Default for GccMethod {
     fn default() -> Self {
@@ -27,12 +18,11 @@ impl Default for GccMethod {
     }
 }
 
-
 #[derive(Debug)]
 enum GccConstraint<Variable: IntegerVariable + 'static> {
     Bruteforce(SimpleGCCLowerUpper<Variable>),
     BasicFilter(GCCLowerUpper2<Variable>),
-    ReginArcConsistent(GCCLowerUpper<Variable>)
+    ReginArcConsistent(GCCLowerUpper<Variable>),
 }
 
 impl<Variable: IntegerVariable + 'static> Constraint for GccConstraint<Variable> {
@@ -42,7 +32,9 @@ impl<Variable: IntegerVariable + 'static> Constraint for GccConstraint<Variable>
         tag: Option<std::num::NonZero<u32>>,
     ) -> Result<(), crate::ConstraintOperationError> {
         match self {
-            GccConstraint::Bruteforce(simple_gcclower_upper) => simple_gcclower_upper.post(solver, tag),
+            GccConstraint::Bruteforce(simple_gcclower_upper) => {
+                simple_gcclower_upper.post(solver, tag)
+            }
             GccConstraint::BasicFilter(gcclower_upper2) => gcclower_upper2.post(solver, tag),
             GccConstraint::ReginArcConsistent(gcclower_upper) => gcclower_upper.post(solver, tag),
         }
@@ -55,9 +47,15 @@ impl<Variable: IntegerVariable + 'static> Constraint for GccConstraint<Variable>
         tag: Option<std::num::NonZero<u32>>,
     ) -> Result<(), crate::ConstraintOperationError> {
         match self {
-            GccConstraint::Bruteforce(simple_gcclower_upper) => simple_gcclower_upper.implied_by(solver, reification_literal, tag),
-            GccConstraint::BasicFilter(gcclower_upper2) => gcclower_upper2.implied_by(solver, reification_literal, tag),
-            GccConstraint::ReginArcConsistent(gcclower_upper) => gcclower_upper.implied_by(solver, reification_literal, tag)
+            GccConstraint::Bruteforce(simple_gcclower_upper) => {
+                simple_gcclower_upper.implied_by(solver, reification_literal, tag)
+            }
+            GccConstraint::BasicFilter(gcclower_upper2) => {
+                gcclower_upper2.implied_by(solver, reification_literal, tag)
+            }
+            GccConstraint::ReginArcConsistent(gcclower_upper) => {
+                gcclower_upper.implied_by(solver, reification_literal, tag)
+            }
         }
     }
 }
@@ -67,7 +65,6 @@ pub fn global_cardinality_lower_upper<Variable: IntegerVariable + 'static>(
     values: impl IntoIterator<Item = Values>,
     method: GccMethod,
 ) -> impl Constraint {
-
     match method {
         GccMethod::Bruteforce => GccConstraint::Bruteforce(SimpleGCCLowerUpper::new(
             variables.into_iter().collect(),
@@ -82,6 +79,4 @@ pub fn global_cardinality_lower_upper<Variable: IntegerVariable + 'static>(
             values.into_iter().collect(),
         )),
     }
-
-    
 }

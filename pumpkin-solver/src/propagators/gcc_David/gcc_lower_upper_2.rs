@@ -1,14 +1,18 @@
 use log::debug;
 
-use crate::{
-    basic_types::Inconsistency, create_statistics_struct, engine::{
-        propagation::{LocalId, Propagator, ReadDomains}, DomainEvents
-    }, predicate, predicates::PropositionalConjunction, propagators::gcc_David::{max_count, min_count}, variables::IntegerVariable
-};
-
-use crate::engine::cp::propagation::contexts::PropagationContextWithTrailedValues;
-
 use super::Values;
+use crate::basic_types::Inconsistency;
+use crate::create_statistics_struct;
+use crate::engine::cp::propagation::contexts::PropagationContextWithTrailedValues;
+use crate::engine::propagation::LocalId;
+use crate::engine::propagation::Propagator;
+use crate::engine::propagation::ReadDomains;
+use crate::engine::DomainEvents;
+use crate::predicate;
+use crate::predicates::PropositionalConjunction;
+use crate::propagators::gcc_David::max_count;
+use crate::propagators::gcc_David::min_count;
+use crate::variables::IntegerVariable;
 // local ids of array vars are shifted by ID_X_OFFSET
 const ID_X_OFFSET: u32 = 2;
 
@@ -49,18 +53,32 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
             // If this is false, there is definitely no solution
             if min > value.omax {
                 // Constraint violation
-                debug!("Inconsistency detected: min: {:?}, max: {:?}, value: {:?}", min, max, value);
-                return Err(Inconsistency::Conflict(self.variables.iter().filter(|v| context.is_fixed(*v) && context.upper_bound(*v) == value.value)
-                    .map(|v| predicate!(v == value.value))
-                    .collect()));
+                debug!(
+                    "Inconsistency detected: min: {:?}, max: {:?}, value: {:?}",
+                    min, max, value
+                );
+                return Err(Inconsistency::Conflict(
+                    self.variables
+                        .iter()
+                        .filter(|v| context.is_fixed(*v) && context.upper_bound(*v) == value.value)
+                        .map(|v| predicate!(v == value.value))
+                        .collect(),
+                ));
             }
 
             if max < value.omin {
                 // Constraint violation
-                debug!("Inconsistency detected: min: {:?}, max: {:?}, value: {:?}", min, max, value);
-                return Err(Inconsistency::Conflict(self.variables.iter().filter(|v| !context.contains(*v, value.value))
-                    .map(|v| predicate!(v != value.value))
-                    .collect()));
+                debug!(
+                    "Inconsistency detected: min: {:?}, max: {:?}, value: {:?}",
+                    min, max, value
+                );
+                return Err(Inconsistency::Conflict(
+                    self.variables
+                        .iter()
+                        .filter(|v| !context.contains(*v, value.value))
+                        .map(|v| predicate!(v != value.value))
+                        .collect(),
+                ));
             }
 
             self.variables.iter().try_for_each(|var| {
@@ -70,39 +88,37 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
                     context.lower_bound(var)
                 );
                 if context.contains(var, value.value) {
-                    // If assigning value $v$ to variable $x$ causes the min_count to be greater than the upper bound this would make problem inconsistent.
+                    // If assigning value $v$ to variable $x$ causes the min_count to be greater
+                    // than the upper bound this would make problem inconsistent.
                     // Therefore we must remove $v$ from $D(x)$
                     if !context.is_fixed(var)
                         && min_count(&self.variables, value.value, &context) + 1 > value.omax
                     {
                         debug!("  Removing val = {}", value.value);
-                        let reason: PropositionalConjunction = self.variables.iter().filter(|v| context.is_fixed(*v) && context.upper_bound(*v) == value.value)
-                        .map(|v| predicate!(v == value.value))
-                        .collect();
-                        context.remove(
-                            var,
-                            value.value,
-                            reason,
-                        )?;
+                        let reason: PropositionalConjunction = self
+                            .variables
+                            .iter()
+                            .filter(|v| {
+                                context.is_fixed(*v) && context.upper_bound(*v) == value.value
+                            })
+                            .map(|v| predicate!(v == value.value))
+                            .collect();
+                        context.remove(var, value.value, reason)?;
                     }
-                    //If not assigning variable $x$ to this value $v$ would make the max_count lower than the lower bound,
-                    //then problem becomes inconsistent. Therefore  $D(x)=v$.
+                    // If not assigning variable $x$ to this value $v$ would make the max_count
+                    // lower than the lower bound, then problem becomes
+                    // inconsistent. Therefore  $D(x)=v$.
                     else if max_count(&self.variables, value.value, &context) - 1 < value.omin {
                         debug!("  Setting val = {}", value.value);
-                        let reason: PropositionalConjunction = self.variables.iter().filter(|v| !context.contains(*v, value.value))
-                        .map(|v| predicate!(v != value.value))
-                        .collect();
-                        context.set_lower_bound(
-                            var,
-                            value.value,
-                            reason.clone(),
-                        )?;
+                        let reason: PropositionalConjunction = self
+                            .variables
+                            .iter()
+                            .filter(|v| !context.contains(*v, value.value))
+                            .map(|v| predicate!(v != value.value))
+                            .collect();
+                        context.set_lower_bound(var, value.value, reason.clone())?;
 
-                        context.set_upper_bound(
-                            var,
-                            value.value,
-                            reason,
-                        )?;
+                        context.set_upper_bound(var, value.value, reason)?;
                     }
                 }
                 Ok(())
@@ -124,7 +140,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
         });
 
         // Register for backtrack events if needed with:
-        //context.register_for_backtrack_events(var, domain_events, local_id);
+        // context.register_for_backtrack_events(var, domain_events, local_id);
         Ok(())
     }
 
@@ -148,7 +164,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
     }
 
     fn log_statistics(&self, statistic_logger: crate::statistics::StatisticLogger) {
-        create_statistics_struct!(Statistics { test: u32});
+        create_statistics_struct!(Statistics { test: u32 });
 
         let statistics = Statistics { test: 0 };
 
@@ -158,5 +174,4 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
     fn priority(&self) -> u32 {
         3
     }
-
 }

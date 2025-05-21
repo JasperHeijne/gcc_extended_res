@@ -697,12 +697,11 @@ fn compile_all_different(
         .is_ok())
 }
 
-
 fn compile_gcc_low_up(
     context: &mut CompilationContext,
     exprs: &[flatzinc::Expr],
     _: &[flatzinc::Annotation],
-    method: GccMethod
+    method: GccMethod,
 ) -> Result<bool, FlatZincError> {
     check_parameters!(exprs, 4, "fzn_global_cardinality_low_up");
 
@@ -711,12 +710,22 @@ fn compile_gcc_low_up(
     let lbound = context.resolve_array_integer_constants(&exprs[2])?.to_vec();
     let ubound = context.resolve_array_integer_constants(&exprs[3])?.to_vec();
 
-    let values: Vec<Values> = cover.iter().zip(lbound).zip(ubound).map(|((c, l), u)| {
-        Values {value: *c, omin: l as u32, omax: u as u32}
-    }).collect();
+    let values: Vec<Values> = cover
+        .iter()
+        .zip(lbound)
+        .zip(ubound)
+        .map(|((c, l), u)| Values {
+            value: *c,
+            omin: l as u32,
+            omax: u as u32,
+        })
+        .collect();
 
-
-    Ok(constraints::global_cardinality_lower_upper::global_cardinality_lower_upper(variables, values, method)
-    .post(context.solver, None)
-    .is_ok())
+    Ok(
+        constraints::global_cardinality_lower_upper::global_cardinality_lower_upper(
+            variables, values, method,
+        )
+        .post(context.solver, None)
+        .is_ok(),
+    )
 }

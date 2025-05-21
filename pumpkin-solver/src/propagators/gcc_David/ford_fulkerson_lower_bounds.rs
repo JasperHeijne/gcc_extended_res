@@ -1,19 +1,21 @@
-use std::{
-    collections::VecDeque,
-    fmt::Display,
-    ops::{Add, Sub},
-};
+use std::collections::VecDeque;
+use std::fmt::Display;
+use std::ops::Add;
+use std::ops::Sub;
 
 use num::zero;
-use petgraph::{algo::PositiveMeasure, visit::EdgeRef, Direction};
-
-use {
-    petgraph::data::DataMap,
-    petgraph::visit::{
-        EdgeCount, EdgeIndexable, IntoEdges, IntoEdgesDirected, NodeCount, NodeIndexable, VisitMap,
-        Visitable,
-    },
-};
+use petgraph::algo::PositiveMeasure;
+use petgraph::data::DataMap;
+use petgraph::visit::EdgeCount;
+use petgraph::visit::EdgeIndexable;
+use petgraph::visit::EdgeRef;
+use petgraph::visit::IntoEdges;
+use petgraph::visit::IntoEdgesDirected;
+use petgraph::visit::NodeCount;
+use petgraph::visit::NodeIndexable;
+use petgraph::visit::VisitMap;
+use petgraph::visit::Visitable;
+use petgraph::Direction;
 
 #[derive(Default, Debug, Clone, Copy)]
 pub(crate) struct BoundedCapacity {
@@ -212,8 +214,8 @@ where
 ///
 /// # Example
 /// ```rust
-/// use petgraph::Graph;
 /// use petgraph::algo::ford_fulkerson;
+/// use petgraph::Graph;
 /// // Example from CLRS book
 /// let mut graph = Graph::<u8, u8>::new();
 /// let source = graph.add_node(0);
@@ -223,16 +225,16 @@ where
 /// let _ = graph.add_node(4);
 /// let destination = graph.add_node(5);
 /// graph.extend_with_edges(&[
-///    (0, 1, 16),
-///    (0, 2, 13),
-///    (1, 2, 10),
-///    (1, 3, 12),
-///    (2, 1, 4),
-///    (2, 4, 14),
-///    (3, 2, 9),
-///    (3, 5, 20),
-///    (4, 3, 7),
-///    (4, 5, 4),
+///     (0, 1, 16),
+///     (0, 2, 13),
+///     (1, 2, 10),
+///     (1, 3, 12),
+///     (2, 1, 4),
+///     (2, 4, 14),
+///     (3, 2, 9),
+///     (3, 5, 20),
+///     (4, 3, 7),
+///     (4, 5, 4),
 /// ]);
 /// let (max_flow, _) = ford_fulkerson(&graph, source, destination);
 /// assert_eq!(23, max_flow);
@@ -259,8 +261,8 @@ where
     let mut flows = vec![N::EdgeWeight::zero(); network.edge_count()];
     flows[..flows_initial.len()].copy_from_slice(&flows_initial);
 
-    //let mut flows = vec![N::EdgeWeight::zero(); network.edge_count()];
-    //let mut max_flow = N::EdgeWeight::zero();
+    // let mut flows = vec![N::EdgeWeight::zero(); network.edge_count()];
+    // let mut max_flow = N::EdgeWeight::zero();
     while has_augmented_path(&network, source, destination, &mut edge_to, &flows) {
         let mut path_flow = N::EdgeWeight::max();
 

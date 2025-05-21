@@ -18,8 +18,13 @@ predicate pumpkin_gcc_basic_filter(array[int] of var int: x,
                                         array[int] of int: cover,
                                         array[int] of int: lbound,
                                         array[int] of int: ubound);
-                                        
+
 predicate pumpkin_gcc_regin(array[int] of var int: x,
+                                        array[int] of int: cover,
+                                        array[int] of int: lbound,
+                                        array[int] of int: ubound);
+
+predicate pumpkin_gcc_extended_resolution(array[int] of var int: x,
                                         array[int] of int: cover,
                                         array[int] of int: lbound,
                                         array[int] of int: ubound);

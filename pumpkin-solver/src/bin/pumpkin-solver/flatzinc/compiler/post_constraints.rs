@@ -729,3 +729,31 @@ fn compile_gcc_low_up(
         .is_ok(),
     )
 }
+
+fn compile_gcc_extended_resolution(
+    context: &mut CompilationContext,
+    exprs: &[flatzinc::Expr],
+    _: &[flatzinc::Annotation],
+) -> Result<bool, FlatZincError> {
+    check_parameters!(exprs, 4, "fzn_global_cardinality_low_up");
+
+    let variables = context.resolve_integer_variable_array(&exprs[0])?.to_vec();
+    let cover = context.resolve_array_integer_constants(&exprs[1])?.to_vec();
+    let lbound = context.resolve_array_integer_constants(&exprs[2])?.to_vec();
+    let ubound = context.resolve_array_integer_constants(&exprs[3])?.to_vec();
+
+    let values: Vec<Values> = cover
+        .iter()
+        .zip(lbound)
+        .zip(ubound)
+        .map(|((c, l), u)| Values {
+            value: *c,
+            omin: l as u32,
+            omax: u as u32,
+        })
+        .collect();
+
+    let extended_variables = context.init_extended_equality_variables(&variables);
+
+    todo!()
+}

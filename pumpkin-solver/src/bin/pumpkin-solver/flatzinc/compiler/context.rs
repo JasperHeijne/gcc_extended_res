@@ -56,6 +56,11 @@ pub(crate) struct CompilationContext<'a> {
 
     /// All set parameters.
     pub(crate) set_constants: HashMap<Rc<str>, Set>,
+
+    // Extended resolution: E_{x, y} <-> x == y
+    // Mapping from pairs of variables (x, y) to E_{x, y}.
+    // The following property should hold: x.id <= y.id
+    pub(crate) extended_equality_variables: HashMap<(DomainId, DomainId), Literal>,
 }
 
 /// A set parameter.
@@ -93,6 +98,7 @@ impl CompilationContext<'_> {
             integer_variable_arrays: Default::default(),
 
             set_constants: Default::default(),
+            extended_equality_variables: Default::default(),
         }
     }
 
@@ -432,6 +438,30 @@ impl CompilationContext<'_> {
             | flatzinc::Expr::ArrayOfFloat(_)
             | flatzinc::Expr::ArrayOfSet(_) => Err(FlatZincError::UnexpectedExpr),
         }
+    }
+
+    pub(crate) fn init_extended_equality_variables(
+        &mut self,
+        vars: &[DomainId],
+    ) -> HashMap<(DomainId, DomainId), Literal> {
+        let mut local_map: HashMap<(DomainId, DomainId), Literal> = HashMap::default();
+
+        // This loop wastes half of its iterations, but it is still O(n^2)
+        for a in vars {
+            for b in vars {
+                // Ensure a has lower id than b
+                let (a, b) = if a.id <= b.id { (a, b) } else { (b, a) };
+
+                let literal = self
+                    .extended_equality_variables
+                    .entry((*a, *b))
+                    .or_insert_with(|| self.solver.new_literal());
+
+                let _ = local_map.insert((*a, *b), *literal);
+            }
+        }
+
+        local_map
     }
 }
 

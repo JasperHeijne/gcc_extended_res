@@ -1,24 +1,23 @@
 use super::Constraint;
-use crate::propagators::gcc_David::gcc_lower_upper::GCCLowerUpper;
-use crate::propagators::gcc_David::gcc_lower_upper_2::GCCLowerUpper2;
-use crate::propagators::gcc_David::simple_gcc_lower_upper::SimpleGCCLowerUpper;
-pub use crate::propagators::gcc_David::Values;
+use crate::propagators::gcc_david::gcc_lower_upper::GCCLowerUpper;
+use crate::propagators::gcc_david::gcc_lower_upper_2::GCCLowerUpper2;
+use crate::propagators::gcc_david::simple_gcc_lower_upper::SimpleGCCLowerUpper;
+pub use crate::propagators::gcc_david::Values;
 use crate::variables::IntegerVariable;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub enum GccMethod {
     Bruteforce,
     BasicFilter,
+    #[default]
     ReginArcConsistent,
 }
 
-impl Default for GccMethod {
-    fn default() -> Self {
-        GccMethod::ReginArcConsistent
-    }
-}
-
 #[derive(Debug)]
+#[allow(
+    clippy::large_enum_variant,
+    reason = "enum used rarely enough (once per constraint)"
+)]
 enum GccConstraint<Variable: IntegerVariable + 'static> {
     Bruteforce(SimpleGCCLowerUpper<Variable>),
     BasicFilter(GCCLowerUpper2<Variable>),

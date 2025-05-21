@@ -10,8 +10,8 @@ use crate::engine::propagation::ReadDomains;
 use crate::engine::DomainEvents;
 use crate::predicate;
 use crate::predicates::PropositionalConjunction;
-use crate::propagators::gcc_David::max_count;
-use crate::propagators::gcc_David::min_count;
+use crate::propagators::gcc_david::max_count;
+use crate::propagators::gcc_david::min_count;
 use crate::variables::IntegerVariable;
 // local ids of array vars are shifted by ID_X_OFFSET
 const ID_X_OFFSET: u32 = 2;

@@ -5,7 +5,7 @@
 pub(crate) mod arithmetic;
 mod cumulative;
 pub(crate) mod element;
-pub(crate) mod gcc_David;
+pub(crate) mod gcc_david;
 pub(crate) mod nogoods;
 mod reified_propagator;
 pub(crate) use arithmetic::*;

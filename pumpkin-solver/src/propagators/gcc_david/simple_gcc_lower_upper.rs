@@ -9,7 +9,7 @@ use crate::engine::propagation::ReadDomains;
 use crate::engine::DomainEvents;
 use crate::predicates::Predicate;
 use crate::predicates::PropositionalConjunction;
-use crate::propagators::gcc_David::*;
+use crate::propagators::gcc_david::*;
 use crate::variables::IntegerVariable;
 
 // local ids of array vars are shifted by ID_X_OFFSET

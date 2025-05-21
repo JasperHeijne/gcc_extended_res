@@ -1,4 +1,3 @@
-#[allow(unused)]
 use ford_fulkerson_lower_bounds::BoundedCapacity;
 use petgraph::graph::DiGraph;
 use petgraph::graph::EdgeReference;
@@ -69,10 +68,10 @@ where
             //    predicate!(var >= context.lower_bound(var)),
             //    predicate!(var <= context.upper_bound(var)),
             //]
-            var.describe_domain(&context.assignments)
+            var.describe_domain(context.assignments)
         })
         .collect();
-    res.into()
+    res
 }
 
 fn min_count<Variable: IntegerVariable>(
@@ -141,7 +140,7 @@ fn graph_to_dot<N: ToString, E: std::fmt::Display>(
     for node in graph.node_indices() {
         let node_name = format!("{}", node.index()); // n0, n1, n2, ...
         let label = graph[node].to_string();
-        let default_color = "black".to_string();
+        let default_color = "black".to_owned();
         let color = node_colors.get(&node).unwrap_or(&default_color);
         dot_string.push_str(&format!(
             "  {} [label=\"{}\", color=\"{}\"];\n",

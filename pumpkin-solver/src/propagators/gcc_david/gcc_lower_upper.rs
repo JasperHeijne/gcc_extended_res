@@ -23,7 +23,7 @@ use crate::engine::propagation::ReadDomains;
 use crate::engine::DomainEvents;
 use crate::predicate;
 use crate::predicates::PropositionalConjunction;
-use crate::propagators::gcc_David::*;
+use crate::propagators::gcc_david::*;
 use crate::variables::IntegerVariable;
 // local ids of array vars are shifted by ID_X_OFFSET
 const ID_X_OFFSET: u32 = 2;
@@ -311,7 +311,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
         {
             let dot = graph_to_dot(
                 &self.graph_data.graph,
-                &vec![],
+                &[],
                 &self.graph_data.variables_nodes,
                 &self.graph_data.values_nodes,
                 &vec![],
@@ -361,7 +361,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
         {
             let dot = graph_to_dot(
                 &self.graph_data.graph,
-                &vec![],
+                &[],
                 &self.graph_data.variables_nodes,
                 &self.graph_data.values_nodes,
                 &vec![],
@@ -511,9 +511,9 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
                 // predicate
                 if naive_expl.len() > 1 {
                     for (i, j) in self.graph_data.initial_intermediate_edges.iter() {
-                        let var_index = self.graph_data.node_index_to_variable_index[&j];
+                        let var_index = self.graph_data.node_index_to_variable_index[j];
 
-                        let val_index = self.graph_data.node_index_to_value_index[&i];
+                        let val_index = self.graph_data.node_index_to_value_index[i];
 
                         let var = &self.variables[var_index];
                         let val = self.values[val_index].value;
@@ -651,7 +651,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
 mod tests {
     use super::GCCLowerUpper;
     use crate::engine::test_solver::TestSolver;
-    use crate::propagators::gcc_David::Values;
+    use crate::propagators::gcc_david::Values;
 
     #[test]
     fn test_propagation() {
@@ -749,7 +749,7 @@ mod tests {
             ))
             .expect("No empty domains");
 
-        solver.remove(x_3, 4);
+        let _ = solver.remove(x_3, 4);
 
         // let r = solver.propagate(propagator);
 

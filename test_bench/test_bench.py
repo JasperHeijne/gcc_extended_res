@@ -1,7 +1,6 @@
 import os
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
-from itertools import product
 import shutil
 import time
 import shlex
@@ -12,7 +11,7 @@ import random
 temp_dir = './temp_directory/'
 
 timeout_secs = 10 * 60 ## 20 minutes
-NUM_CORES = 6-1;
+NUM_CORES = 6-1
 
 def replace_in_file(file_path, string1, string2):
     # Open the file and read all lines
@@ -217,7 +216,7 @@ def main():
     executor =  ThreadPoolExecutor(max_workers=NUM_CORES)
     futures = []
     for name, cmd, outfile in commands_to_run:
-        future = executor.submit(run_command, name, cmd, outfile) 
+        future = executor.submit(run_command, name, cmd, outfile,  timeout_secs * 1000)
         futures.append(future)
         #print("future added")
 

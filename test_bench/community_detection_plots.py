@@ -22,8 +22,8 @@ stats = {
 patterns = {
     "decisions": re.compile(r"engineStatisticsNumDecisions=(\d+)"),
     "conflicts": re.compile(r"engineStatisticsNumConflicts=(\d+)"),
-    "lbd": re.compile(r"learnedClauseStatisticsAverageLbd=([\d\.]+)"),
-    "time": re.compile(r"% time elapsed: ([\d\.]+) s")
+    "lbd": re.compile(r"learnedClauseStatisticsAverageLbd=([\d.]+)"),
+    "time": re.compile(r"% time elapsed: ([\d.]+) s")
 }
 
 # Helper function to extract stats from a file

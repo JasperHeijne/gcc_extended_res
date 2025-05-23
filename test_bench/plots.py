@@ -8,7 +8,7 @@ from collections import defaultdict
 
 #%matplotlib qtagg
 
-MAX_RUNTIME = 20*60; # 20 minutes
+MAX_RUNTIME = 20*60 # 20 minutes
 
 # %%
 def extract_runtime(filepath, ignore_unkown_status=False):
@@ -854,7 +854,7 @@ def print_mean_ratios_and_success_rate(avg_runtimes, stat_type="Runtime", remove
 #directories = ["output_evm_super_compilation/", "output_community_detection/", "output_rotating_workforce_scheduling/", "output_community_detection_rnd/" ]
 directories = ["output_all-new/" ]
 
-avg_runtimes, avg_objectives, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes, std = parse_benchmark_dirs(directories)
+avg_runtimes, avg_objectives, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes, _ = parse_benchmark_dirs(directories)
 normalized_runtimes = normalize(avg_runtimes)
 normalized_objectives = normalize_objective(avg_objectives)
 normalized_lbds = normalize(avg_lbds)
@@ -881,12 +881,12 @@ print_mean_ratios_and_success_rate(avg_conflict_sizes, "CS", remove_missing=True
 
 directories = ["output_sudoku_single/" ]
 
-avg_runtimes, avg_objectives, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes, std = parse_benchmark_dirs(directories)
+avg_runtimes, avg_objectives, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes, _ = parse_benchmark_dirs(directories)
 normalized_runtimes = normalize(avg_runtimes)
-normalized_objectives = normalize_objective(avg_objectives)
-normalized_lbds = normalize(avg_lbds)
-normalized_learned_clause_lengths = normalize(avg_learned_clause_lengths)
-normalized_conflict_sizes = normalize(avg_conflict_sizes)
+# normalized_objectives = normalize_objective(avg_objectives)
+# normalized_lbds = normalize(avg_lbds)
+# normalized_learned_clause_lengths = normalize(avg_learned_clause_lengths)
+# normalized_conflict_sizes = normalize(avg_conflict_sizes)
 
 #print(avg_runtimes)
 
@@ -896,7 +896,7 @@ plot_benchmarks(normalized_runtimes, avg_runtimes, title='Normalized Runtimes by
 
 #plot_all_statistics(normalized_runtimes, normalized_lbds, normalized_learned_clause_lengths, normalized_conflict_sizes, avg_runtimes, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes)
 
-print_mean_ratios_and_success_rate(avg_runtimes, "Runtimes", invert=True, max_runtime=MAX_RUNTIME/2)
+print_mean_ratios_and_success_rate(avg_runtimes, "Runtimes", invert=True, max_runtime= int(MAX_RUNTIME/2))
 print_mean_ratios_and_success_rate(avg_lbds, "LBD", remove_missing=True)
 print_mean_ratios_and_success_rate(avg_learned_clause_lengths, "LCL", remove_missing=True)
 print_mean_ratios_and_success_rate(avg_conflict_sizes, "CS", remove_missing=True)
@@ -906,12 +906,12 @@ print_mean_ratios_and_success_rate(avg_conflict_sizes, "CS", remove_missing=True
 
 directories = ["output_sudoku_single_new_expls_v2/" ]
 
-avg_runtimes, avg_objectives, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes, std = parse_benchmark_dirs(directories)
+avg_runtimes, avg_objectives, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes, _ = parse_benchmark_dirs(directories)
 normalized_runtimes = normalize(avg_runtimes)
-normalized_objectives = normalize_objective(avg_objectives)
-normalized_lbds = normalize(avg_lbds)
-normalized_learned_clause_lengths = normalize(avg_learned_clause_lengths)
-normalized_conflict_sizes = normalize(avg_conflict_sizes)
+# normalized_objectives = normalize_objective(avg_objectives)
+# normalized_lbds = normalize(avg_lbds)
+# normalized_learned_clause_lengths = normalize(avg_learned_clause_lengths)
+# normalized_conflict_sizes = normalize(avg_conflict_sizes)
 
 #print(avg_runtimes)
 
@@ -921,7 +921,7 @@ plot_benchmarks(normalized_runtimes, avg_runtimes, title='Normalized Runtimes by
 
 #plot_all_statistics(normalized_runtimes, normalized_lbds, normalized_learned_clause_lengths, normalized_conflict_sizes, avg_runtimes, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes)
 
-print_mean_ratios_and_success_rate(avg_runtimes, "Runtimes", invert=True, max_runtime=MAX_RUNTIME/2)
+print_mean_ratios_and_success_rate(avg_runtimes, "Runtimes", invert=True, max_runtime=int(MAX_RUNTIME/2))
 print_mean_ratios_and_success_rate(avg_lbds, "LBD", remove_missing=True)
 print_mean_ratios_and_success_rate(avg_learned_clause_lengths, "LCL", remove_missing=True)
 print_mean_ratios_and_success_rate(avg_conflict_sizes, "CS", remove_missing=True)
@@ -930,7 +930,7 @@ print_mean_ratios_and_success_rate(avg_conflict_sizes, "CS", remove_missing=True
 
 directories = ["output_all_new_expls/" ]
 
-avg_runtimes, avg_objectives, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes, std = parse_benchmark_dirs(directories)
+avg_runtimes, avg_objectives, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes, _ = parse_benchmark_dirs(directories)
 normalized_runtimes = normalize(avg_runtimes)
 normalized_objectives = normalize_objective(avg_objectives)
 normalized_lbds = normalize(avg_lbds)

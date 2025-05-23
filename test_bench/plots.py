@@ -881,7 +881,7 @@ print_mean_ratios_and_success_rate(avg_conflict_sizes, "CS", remove_missing=True
 
 directories = ["output_sudoku_single/" ]
 
-avg_runtimes, avg_objectives, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes, _ = parse_benchmark_dirs(directories)
+avg_runtimes, _, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes, _ = parse_benchmark_dirs(directories)
 normalized_runtimes = normalize(avg_runtimes)
 # normalized_objectives = normalize_objective(avg_objectives)
 # normalized_lbds = normalize(avg_lbds)
@@ -906,7 +906,7 @@ print_mean_ratios_and_success_rate(avg_conflict_sizes, "CS", remove_missing=True
 
 directories = ["output_sudoku_single_new_expls_v2/" ]
 
-avg_runtimes, avg_objectives, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes, _ = parse_benchmark_dirs(directories)
+avg_runtimes, _, avg_lbds, avg_learned_clause_lengths, avg_conflict_sizes, _ = parse_benchmark_dirs(directories)
 normalized_runtimes = normalize(avg_runtimes)
 # normalized_objectives = normalize_objective(avg_objectives)
 # normalized_lbds = normalize(avg_lbds)

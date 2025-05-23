@@ -272,7 +272,7 @@ def plot_benchmarks(avg_values, abs_values, title='Normalized Benchmark Values b
 
     # Sort problems alphabetically by their label
     problems = sorted(grouped_data.keys(), key=lambda x: f"{x[0]}, {x[1]}")
-    abbreviated_problems = [f"{str(abbreviate_text(problem, max_length=10))+", " if not hide_problem_name else ""}{abbreviate_text(data_file, max_length=20)}" for problem, data_file in problems]
+    abbreviated_problems = [f"{str(abbreviate_text(problem, max_length=10))+', ' if not hide_problem_name else ''}{abbreviate_text(data_file, max_length=20)}" for problem, data_file in problems]
     x = range(len(problems))
     bar_width = 0.2
 
@@ -841,8 +841,8 @@ def print_mean_ratios_and_success_rate(avg_runtimes, stat_type="Runtime", remove
     basic_filter_success_rate = (total_instances - basic_filter_did_not_terminate) / total_instances
     decomp_success_rate = (total_instances - decomp_did_not_terminate) / total_instances
 
-    print(f"Mean {stat_type} Ratio (Regin vs Decomp) {"(invert)" if invert else ""}: arithmetic: {mean_regin_ratio:.2f}, geometric: {geometric_mean_regin_ratio:.2f}")
-    print(f"Mean {stat_type} Ratio (Basic Filter vs Decomp) {"(invert)" if invert else ""}: arithmetic: {mean_basic_filter_ratio:.2f}, geometric: {geometric_mean_basic_filter_ratio:.2f}")
+    print(f"Mean {stat_type} Ratio (Regin vs Decomp) {'(invert)' if invert else ''}: arithmetic: {mean_regin_ratio:.2f}, geometric: {geometric_mean_regin_ratio:.2f}")
+    print(f"Mean {stat_type} Ratio (Basic Filter vs Decomp) {'(invert)' if invert else ''}: arithmetic: {mean_basic_filter_ratio:.2f}, geometric: {geometric_mean_basic_filter_ratio:.2f}")
 
     if not remove_missing:
         print(f"Success Rate (Regin): {regin_success_rate:.2%} (Basic Filter): {basic_filter_success_rate:.2%} (Decomp): {decomp_success_rate:.2%}")

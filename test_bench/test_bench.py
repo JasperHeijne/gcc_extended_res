@@ -9,7 +9,7 @@ import argparse
 import random
 
 
-temp_dir = './temp_directory'
+temp_dir = './temp_directory/'
 
 timeout_secs = 10 * 60 ## 20 minutes
 NUM_CORES = 6-1;
@@ -155,7 +155,12 @@ def main():
 
     # Print the list of tuples
     #print(input_files)
-    pumpkin_command = f"MZN_SOLVER_PATH=../minizinc minizinc --solver ../minizinc/pumpkin.msc --output-time --statistics --output-objective --time-limit {timeout_secs * 1000}"
+    # change the code to work for windows:
+    # pumpkin_command = f"MZN_SOLVER_PATH=../minizinc minizinc --solver ../minizinc/pumpkin.msc --output-time --statistics --output-objective --time-limit {timeout_secs * 1000}"
+    if os.name == 'nt':  # Windows
+        pumpkin_command = f'$env:MZN_SOLVER_PATH="../minizinc"; minizinc --solver ../minizinc/pumpkin.msc --output-time --statistics --output-objective --time-limit {timeout_secs * 1000}'
+    else:  # Unix-like
+        pumpkin_command = f"MZN_SOLVER_PATH=../minizinc minizinc --solver ../minizinc/pumpkin.msc --output-time --statistics --output-objective --time-limit {timeout_secs * 1000}"
 
     commands = [
         ("decomp",f"{pumpkin_command}", []),

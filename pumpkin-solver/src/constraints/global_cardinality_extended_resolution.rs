@@ -5,6 +5,7 @@ use super::Constraint;
 use crate::basic_types::HashMap;
 use crate::propagators::gcc_extended_resolution::equality::GccEquality;
 use crate::propagators::gcc_extended_resolution::exclusion::GccExclusion;
+use crate::propagators::gcc_extended_resolution::inequality::GccInequality;
 use crate::propagators::gcc_extended_resolution::intersection::GccIntersection;
 use crate::propagators::gcc_extended_resolution::transitive::GccTransitive;
 use crate::variables::IntegerVariable;
@@ -82,6 +83,14 @@ impl<Var: IntegerVariable> Constraint for GccExtendedResolution<Var> {
 
             GccExclusion::new(*e_xy, x.clone(), y.clone()).post(solver, tag)?;
             GccExclusion::new(*e_xy, y, x).post(solver, tag)?;
+        }
+
+        // D(x) ∩ D(y) = {} => E_{x, y} = 0
+        for ((i, j), e_xy) in &self.equalities {
+            let x = self.variables[*i].clone();
+            let y = self.variables[*j].clone();
+
+            GccInequality::new(x, y, *e_xy).post(solver, tag)?;
         }
 
         todo!("full constraint not implemented yet")

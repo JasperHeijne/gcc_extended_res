@@ -3,6 +3,7 @@ use std::num::NonZero;
 use super::global_cardinality_lower_upper::Values;
 use super::Constraint;
 use crate::basic_types::HashMap;
+use crate::propagators::gcc_extended_resolution::equality::GccEquality;
 use crate::propagators::gcc_extended_resolution::intersection::GccIntersection;
 use crate::propagators::gcc_extended_resolution::transitive::GccTransitive;
 use crate::variables::IntegerVariable;
@@ -62,6 +63,15 @@ impl<Var: IntegerVariable> Constraint for GccExtendedResolution<Var> {
                     }
                 }
             }
+        }
+
+        // x = v and y = v => E_{x,y} = 1
+        for ((i, j), extended_literal) in &self.equalities {
+            let left = self.variables[*i].clone();
+            let right = self.variables[*j].clone();
+
+            let equality = GccEquality::new(left, right, *extended_literal);
+            equality.post(solver, tag)?;
         }
 
         todo!("full constraint not implemented yet")

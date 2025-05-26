@@ -42,7 +42,7 @@ impl Propagator for GccTransitive {
             && self.yz.lower_bound(context.assignments) == 1
         {
             let reason = conjunction!([self.xy == 1] & [self.yz == 1]);
-            PropagationContextMut::set_lower_bound(&mut context, &self.xz, 1, reason)?;
+            PropagationContextMut::assign_literal(&mut context, &self.xz, true, reason)?;
         }
 
         Ok(())

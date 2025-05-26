@@ -39,11 +39,11 @@ impl<Var: IntegerVariable> Constraint for GccExtendedResolution<Var> {
     ) -> Result<(), crate::ConstraintOperationError> {
         // If E_{x,y} = 1, then D'(x) = D'(y) = D(x) ∩ D(y)
         for ((i, j), extended_literal) in &self.equalities {
-            let left = self.variables[*i].clone();
-            let right = self.variables[*j].clone();
+            let x = self.variables[*i].clone();
+            let y = self.variables[*j].clone();
 
-            let intersection = GccIntersection::new(*extended_literal, left, right);
-            intersection.post(solver, tag)?;
+            GccIntersection::new(*extended_literal, x.clone(), y.clone()).post(solver, tag)?;
+            GccIntersection::new(*extended_literal, y, x).post(solver, tag)?;
         }
 
         // E_{x,y} = 1 and E_{y, z} = 1 => E_{x,z} = 1

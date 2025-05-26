@@ -34,7 +34,7 @@ impl<Var: IntegerVariable> Propagator for GccIntersection<Var> {
     ) -> Result<(), crate::predicates::PropositionalConjunction> {
         let _ = context.register(
             self.extended_literal,
-            DomainEvents::ANY_INT,
+            DomainEvents::LOWER_BOUND,
             LocalId::from(0),
         );
         let _ = context.register(self.left.clone(), DomainEvents::ANY_INT, LocalId::from(1));

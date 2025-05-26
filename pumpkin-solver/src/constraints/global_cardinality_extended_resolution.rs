@@ -4,6 +4,7 @@ use super::global_cardinality_lower_upper::Values;
 use super::Constraint;
 use crate::basic_types::HashMap;
 use crate::propagators::gcc_extended_resolution::equality::GccEquality;
+use crate::propagators::gcc_extended_resolution::exclusion::GccExclusion;
 use crate::propagators::gcc_extended_resolution::intersection::GccIntersection;
 use crate::propagators::gcc_extended_resolution::transitive::GccTransitive;
 use crate::variables::IntegerVariable;
@@ -72,6 +73,15 @@ impl<Var: IntegerVariable> Constraint for GccExtendedResolution<Var> {
 
             let equality = GccEquality::new(left, right, *extended_literal);
             equality.post(solver, tag)?;
+        }
+
+        // E_{x,y} = 0 and x = v => y != v
+        for ((i, j), e_xy) in &self.equalities {
+            let x = self.variables[*i].clone();
+            let y = self.variables[*j].clone();
+
+            GccExclusion::new(*e_xy, x.clone(), y.clone()).post(solver, tag)?;
+            GccExclusion::new(*e_xy, y, x).post(solver, tag)?;
         }
 
         todo!("full constraint not implemented yet")

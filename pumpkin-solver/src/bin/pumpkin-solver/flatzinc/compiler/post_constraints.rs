@@ -18,6 +18,7 @@ use crate::flatzinc::ast::FlatZincAst;
 use crate::flatzinc::compiler::context::Set;
 use crate::flatzinc::FlatZincError;
 use crate::flatzinc::FlatZincOptions;
+use crate::HashMap;
 
 pub(crate) fn run(
     ast: &FlatZincAst,
@@ -206,6 +207,7 @@ pub(crate) fn run(
             "pumpkin_gcc_bruteforce" => compile_gcc_low_up(context, exprs, annos, GccMethod::Bruteforce)?,
             "pumpkin_gcc_basic_filter" => compile_gcc_low_up(context, exprs, annos, GccMethod::BasicFilter)?,
             "pumpkin_gcc_regin" => compile_gcc_low_up(context, exprs, annos, GccMethod::ReginArcConsistent)?,
+            "pumpkin_gcc_extended_resolution" => compile_gcc_extended_resolution(context, exprs, annos)?,
             unknown => todo!("unsupported constraint {unknown}"),
         };
 
@@ -753,7 +755,12 @@ fn compile_gcc_extended_resolution(
         })
         .collect();
 
-    let extended_variables = context.init_extended_equality_variables(&variables);
+    let extended_variables: HashMap<(usize, usize), pumpkin_solver::variables::Literal> =
+        context.init_extended_equality_variables(&variables);
 
-    todo!()
+    Ok(
+        constraints::gcc_extended_resolution(variables, values, extended_variables)
+            .post(context.solver, None)
+            .is_ok(),
+    )
 }

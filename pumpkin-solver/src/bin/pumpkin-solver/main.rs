@@ -46,6 +46,7 @@ use crate::flatzinc::FlatZincOptions;
 use crate::maxsat::wcnf_problem;
 
 pub(crate) type HashMap<K, V, Hasher = FnvBuildHasher> = std::collections::HashMap<K, V, Hasher>;
+pub(crate) type HashSet<K, Hasher = FnvBuildHasher> = std::collections::HashSet<K, Hasher>;
 
 #[derive(Debug, Parser)]
 #[command(

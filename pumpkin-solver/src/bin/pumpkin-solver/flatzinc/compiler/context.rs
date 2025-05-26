@@ -1,8 +1,7 @@
 use std::collections::BTreeSet;
-use std::collections::HashMap;
-use std::collections::HashSet;
 use std::rc::Rc;
 
+use fnv::FnvBuildHasher;
 use log::warn;
 use pumpkin_solver::variables::DomainId;
 use pumpkin_solver::variables::Literal;
@@ -10,6 +9,8 @@ use pumpkin_solver::Solver;
 
 use crate::flatzinc::instance::Output;
 use crate::flatzinc::FlatZincError;
+use crate::HashMap;
+use crate::HashSet;
 
 pub(crate) struct CompilationContext<'a> {
     /// The solver to compile the FlatZinc into.
@@ -443,21 +444,23 @@ impl CompilationContext<'_> {
     pub(crate) fn init_extended_equality_variables(
         &mut self,
         vars: &[DomainId],
-    ) -> HashMap<(DomainId, DomainId), Literal> {
-        let mut local_map: HashMap<(DomainId, DomainId), Literal> = HashMap::default();
+    ) -> HashMap<(usize, usize), Literal> {
+        let mut local_map: HashMap<(usize, usize), Literal> =
+            HashMap::with_hasher(FnvBuildHasher::default());
 
         // This loop wastes half of its iterations, but it is still O(n^2)
-        for a in vars {
-            for b in vars {
+        for (i, a) in vars.iter().enumerate() {
+            for (j, b) in vars.iter().enumerate() {
                 // Ensure a has lower id than b
-                let (a, b) = if a.id <= b.id { (a, b) } else { (b, a) };
-
+                if a.id > b.id {
+                    continue;
+                }
                 let literal = self
                     .extended_equality_variables
                     .entry((*a, *b))
                     .or_insert_with(|| self.solver.new_literal());
 
-                let _ = local_map.insert((*a, *b), *literal);
+                let _ = local_map.insert((i, j), *literal);
             }
         }
 

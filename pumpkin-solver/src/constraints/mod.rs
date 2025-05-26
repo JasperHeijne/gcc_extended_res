@@ -41,6 +41,7 @@ pub use clause::*;
 pub use constraint_poster::*;
 pub use cumulative::*;
 pub use element::*;
+pub use global_cardinality_extended_resolution::*;
 
 use crate::engine::propagation::Propagator;
 use crate::propagators::ReifiedPropagator;

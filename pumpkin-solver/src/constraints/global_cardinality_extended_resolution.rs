@@ -8,10 +8,10 @@ use crate::propagators::gcc_extended_resolution::exclusion::GccExclusion;
 use crate::propagators::gcc_extended_resolution::inequality::GccInequality;
 use crate::propagators::gcc_extended_resolution::intersection::GccIntersection;
 use crate::propagators::gcc_extended_resolution::transitive::GccTransitive;
+use crate::propagators::gcc_extended_resolution::upper_bound::GccUpperBound;
 use crate::variables::IntegerVariable;
 use crate::variables::Literal;
 
-#[allow(dead_code, reason = "still being implemented")]
 struct GccExtendedResolution<Var: IntegerVariable + 'static> {
     variables: Box<[Var]>,
     values: Box<[Values]>,
@@ -93,7 +93,15 @@ impl<Var: IntegerVariable> Constraint for GccExtendedResolution<Var> {
             GccInequality::new(x, y, *e_xy).post(solver, tag)?;
         }
 
-        todo!("full constraint not implemented yet")
+        // GCC upper-bounds
+        GccUpperBound::new(
+            self.variables.clone(),
+            self.values.clone(),
+            self.equalities.clone(),
+        )
+        .post(solver, tag)?;
+
+        Ok(())
     }
 
     fn implied_by(

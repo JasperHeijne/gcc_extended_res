@@ -60,7 +60,7 @@ def generate_operators():
                 if name == "max":
                     cons = constraints.Maximum(args, rhs)
                 if name == "element":
-                    idx = model.new_integer_variable(-1, 5, name=f"idx")  # sneaky, idx can be out of bounds
+                    idx = model.new_integer_variable(-1, 5, name="idx")  # sneaky, idx can be out of bounds
                     cons = constraints.Element(idx, args, rhs)
 
                 yield model, cons, name, scaled, bool

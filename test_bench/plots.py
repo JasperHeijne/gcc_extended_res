@@ -1354,10 +1354,10 @@ directories = ["output_sudoku_single/"]
     std,
 ) = parse_benchmark_dirs(directories)
 normalized_runtimes = normalize(avg_runtimes)
-normalized_objectives = normalize_objective(avg_objectives)
-normalized_lbds = normalize(avg_lbds)
-normalized_learned_clause_lengths = normalize(avg_learned_clause_lengths)
-normalized_conflict_sizes = normalize(avg_conflict_sizes)
+# normalized_objectives = normalize_objective(avg_objectives)
+# normalized_lbds = normalize(avg_lbds)
+# normalized_learned_clause_lengths = normalize(avg_learned_clause_lengths)
+# normalized_conflict_sizes = normalize(avg_conflict_sizes)
 
 # print(avg_runtimes)
 
@@ -1395,10 +1395,10 @@ directories = ["output_sudoku_single_new_expls_v2/"]
     std,
 ) = parse_benchmark_dirs(directories)
 normalized_runtimes = normalize(avg_runtimes)
-normalized_objectives = normalize_objective(avg_objectives)
-normalized_lbds = normalize(avg_lbds)
-normalized_learned_clause_lengths = normalize(avg_learned_clause_lengths)
-normalized_conflict_sizes = normalize(avg_conflict_sizes)
+# normalized_objectives = normalize_objective(avg_objectives)
+# normalized_lbds = normalize(avg_lbds)
+# normalized_learned_clause_lengths = normalize(avg_learned_clause_lengths)
+# normalized_conflict_sizes = normalize(avg_conflict_sizes)
 
 # print(avg_runtimes)
 

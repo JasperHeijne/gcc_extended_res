@@ -24,7 +24,7 @@ def main(n: int, proof: Path | None):
             row_separator = "+---" * n + "+"
 
             for row in range(n):
-                print(f"{row_separator}");
+                print(f"{row_separator}")
 
                 queen_col = solution.int_value(variables[row])
 

@@ -159,7 +159,12 @@ def main():
 
     # Print the list of tuples
     # print(input_files)
-    pumpkin_command = f"MZN_SOLVER_PATH=../minizinc minizinc --solver ../minizinc/pumpkin.msc --output-time --statistics --output-objective --time-limit {timeout_secs * 1000}"
+    # change the code to work for windows:
+    # pumpkin_command = f"MZN_SOLVER_PATH=../minizinc minizinc --solver ../minizinc/pumpkin.msc --output-time --statistics --output-objective --time-limit {timeout_secs * 1000}"
+    if os.name == "nt":  # Windows
+        pumpkin_command = f'$env:MZN_SOLVER_PATH="../minizinc"; minizinc --solver ../minizinc/pumpkin.msc --output-time --statistics --output-objective --time-limit {timeout_secs * 1000}'
+    else:  # Unix-like
+        pumpkin_command = f"MZN_SOLVER_PATH=../minizinc minizinc --solver ../minizinc/pumpkin.msc --output-time --statistics --output-objective --time-limit {timeout_secs * 1000}"
 
     commands = [
         ("decomp", f"{pumpkin_command}", []),
@@ -226,7 +231,7 @@ def main():
     executor = ThreadPoolExecutor(max_workers=NUM_CORES)
     futures = []
     for name, cmd, outfile in commands_to_run:
-        future = executor.submit(run_command, name, cmd, outfile)
+        future = executor.submit(run_command, name, cmd, outfile, timeout_secs * 1000)
         futures.append(future)
         # print("future added")
 

@@ -3,10 +3,12 @@
 use std::rc::Rc;
 
 use pumpkin_solver::constraints;
-use pumpkin_solver::constraints::global_cardinality_lower_upper::GccMethod;
-use pumpkin_solver::constraints::global_cardinality_lower_upper::Values;
+use pumpkin_solver::constraints::gcc_extended_resolution;
+use pumpkin_solver::constraints::global_cardinality_lower_upper;
 use pumpkin_solver::constraints::Constraint;
+use pumpkin_solver::constraints::GccMethod;
 use pumpkin_solver::constraints::NegatableConstraint;
+use pumpkin_solver::constraints::Values;
 use pumpkin_solver::predicate;
 use pumpkin_solver::predicates::Predicate;
 use pumpkin_solver::variables::AffineView;
@@ -204,10 +206,7 @@ pub(crate) fn run(
 
             "pumpkin_cumulative" => compile_cumulative(context, exprs, &options)?,
             "pumpkin_cumulative_var" => todo!("The `cumulative` constraint with variable duration/resource consumption/bound is not implemented yet!"),
-            "pumpkin_gcc_bruteforce" => compile_gcc_low_up(context, exprs, annos, GccMethod::Bruteforce)?,
-            "pumpkin_gcc_basic_filter" => compile_gcc_low_up(context, exprs, annos, GccMethod::BasicFilter)?,
-            "pumpkin_gcc_regin" => compile_gcc_low_up(context, exprs, annos, GccMethod::ReginArcConsistent)?,
-            "pumpkin_gcc_extended_resolution" => compile_gcc_extended_resolution(context, exprs, annos)?,
+            "pumpkin_gcc" => compile_gcc(context, exprs, &options)?,
             unknown => todo!("unsupported constraint {unknown}"),
         };
 
@@ -252,6 +251,65 @@ fn compile_cumulative(
     )
     .post(context.solver, None);
     Ok(post_result.is_ok())
+}
+
+fn compile_gcc(
+    context: &mut CompilationContext,
+    exprs: &[flatzinc::Expr],
+    options: &FlatZincOptions,
+) -> Result<bool, FlatZincError> {
+    check_parameters!(exprs, 4, "pumpkin_gcc");
+
+    let variables = context.resolve_integer_variable_array(&exprs[0])?.to_vec();
+    let cover = context.resolve_array_integer_constants(&exprs[1])?.to_vec();
+    let lbound = context.resolve_array_integer_constants(&exprs[2])?.to_vec();
+    let ubound = context.resolve_array_integer_constants(&exprs[3])?.to_vec();
+
+    let values: Vec<Values> = cover
+        .iter()
+        .zip(lbound)
+        .zip(ubound)
+        .map(|((c, l), u)| Values {
+            value: *c,
+            omin: l as u32,
+            omax: u as u32,
+        })
+        .collect();
+
+    Ok(match options.gcc_options.propagation_method {
+        pumpkin_solver::options::GccPropagatorMethod::Bruteforce => {
+            global_cardinality_lower_upper(variables, values, GccMethod::Bruteforce)
+                .post(context.solver, None)
+                .is_ok()
+        }
+        pumpkin_solver::options::GccPropagatorMethod::BasicFilter => {
+            global_cardinality_lower_upper(variables, values, GccMethod::BasicFilter)
+                .post(context.solver, None)
+                .is_ok()
+        }
+        pumpkin_solver::options::GccPropagatorMethod::ReginArcConsistent => {
+            global_cardinality_lower_upper(variables, values, GccMethod::ReginArcConsistent)
+                .post(context.solver, None)
+                .is_ok()
+        }
+        pumpkin_solver::options::GccPropagatorMethod::ExtendedResolution => {
+            let extended_variables: HashMap<(usize, usize), pumpkin_solver::variables::Literal> =
+                context.init_extended_equality_variables(&variables);
+            gcc_extended_resolution(variables, values, extended_variables)
+                .post(context.solver, None)
+                .is_ok()
+        }
+        pumpkin_solver::options::GccPropagatorMethod::ExtendedResolutionWithRegin => {
+            let extended_variables: HashMap<(usize, usize), pumpkin_solver::variables::Literal> =
+                context.init_extended_equality_variables(&variables);
+            gcc_extended_resolution(variables.clone(), values.clone(), extended_variables)
+                .post(context.solver, None)
+                .is_ok()
+                && global_cardinality_lower_upper(variables, values, GccMethod::ReginArcConsistent)
+                    .post(context.solver, None)
+                    .is_ok()
+        }
+    })
 }
 
 fn compile_array_int_maximum(
@@ -697,70 +755,4 @@ fn compile_all_different(
     Ok(constraints::all_different(variables)
         .post(context.solver, None)
         .is_ok())
-}
-
-fn compile_gcc_low_up(
-    context: &mut CompilationContext,
-    exprs: &[flatzinc::Expr],
-    _: &[flatzinc::Annotation],
-    method: GccMethod,
-) -> Result<bool, FlatZincError> {
-    check_parameters!(exprs, 4, "fzn_global_cardinality_low_up");
-
-    let variables = context.resolve_integer_variable_array(&exprs[0])?.to_vec();
-    let cover = context.resolve_array_integer_constants(&exprs[1])?.to_vec();
-    let lbound = context.resolve_array_integer_constants(&exprs[2])?.to_vec();
-    let ubound = context.resolve_array_integer_constants(&exprs[3])?.to_vec();
-
-    let values: Vec<Values> = cover
-        .iter()
-        .zip(lbound)
-        .zip(ubound)
-        .map(|((c, l), u)| Values {
-            value: *c,
-            omin: l as u32,
-            omax: u as u32,
-        })
-        .collect();
-
-    Ok(
-        constraints::global_cardinality_lower_upper::global_cardinality_lower_upper(
-            variables, values, method,
-        )
-        .post(context.solver, None)
-        .is_ok(),
-    )
-}
-
-fn compile_gcc_extended_resolution(
-    context: &mut CompilationContext,
-    exprs: &[flatzinc::Expr],
-    _: &[flatzinc::Annotation],
-) -> Result<bool, FlatZincError> {
-    check_parameters!(exprs, 4, "fzn_global_cardinality_low_up");
-
-    let variables = context.resolve_integer_variable_array(&exprs[0])?.to_vec();
-    let cover = context.resolve_array_integer_constants(&exprs[1])?.to_vec();
-    let lbound = context.resolve_array_integer_constants(&exprs[2])?.to_vec();
-    let ubound = context.resolve_array_integer_constants(&exprs[3])?.to_vec();
-
-    let values: Vec<Values> = cover
-        .iter()
-        .zip(lbound)
-        .zip(ubound)
-        .map(|((c, l), u)| Values {
-            value: *c,
-            omin: l as u32,
-            omax: u as u32,
-        })
-        .collect();
-
-    let extended_variables: HashMap<(usize, usize), pumpkin_solver::variables::Literal> =
-        context.init_extended_equality_variables(&variables);
-
-    Ok(
-        constraints::gcc_extended_resolution(variables, values, extended_variables)
-            .post(context.solver, None)
-            .is_ok(),
-    )
 }

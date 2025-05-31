@@ -6,6 +6,8 @@ pub(crate) mod arithmetic;
 mod cumulative;
 pub(crate) mod element;
 pub(crate) mod gcc;
+pub use gcc::GccOptions;
+pub use gcc::GccPropagatorMethod;
 pub(crate) use gcc::*;
 
 pub(crate) mod nogoods;

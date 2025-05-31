@@ -70,6 +70,8 @@ pub mod options {
     pub use crate::propagators::CumulativeExplanationType;
     pub use crate::propagators::CumulativeOptions;
     pub use crate::propagators::CumulativePropagationMethod;
+    pub use crate::propagators::GccOptions;
+    pub use crate::propagators::GccPropagatorMethod;
     #[cfg(doc)]
     use crate::Solver;
 }

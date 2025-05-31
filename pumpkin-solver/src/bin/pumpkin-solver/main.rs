@@ -348,6 +348,11 @@ struct Args {
     #[arg(long = "cumulative-incremental-backtracking")]
     cumulative_incremental_backtracking: bool,
 
+    /// Determines the type of propagator which is used by the GCC propagator(s) to propagate the
+    /// constraint.
+    #[arg(long, value_enum, default_value_t)]
+    gcc_propagation_method: GccPropagatorMethod,
+
     /// Determine what type of optimisation strategy is used by the solver
     #[arg(long = "optimisation-strategy", default_value_t)]
     optimisation_strategy: OptimisationStrategy,
@@ -554,6 +559,7 @@ fn run() -> PumpkinResult<()> {
                     args.cumulative_propagation_method,
                     args.cumulative_incremental_backtracking,
                 ),
+                gcc_options: GccOptions::new(args.gcc_propagation_method),
                 optimisation_strategy: args.optimisation_strategy,
             },
         )?,

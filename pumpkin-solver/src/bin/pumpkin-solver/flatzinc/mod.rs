@@ -20,6 +20,7 @@ use pumpkin_solver::optimisation::linear_unsat_sat::LinearUnsatSat;
 use pumpkin_solver::optimisation::OptimisationDirection;
 use pumpkin_solver::optimisation::OptimisationStrategy;
 use pumpkin_solver::options::CumulativeOptions;
+use pumpkin_solver::options::GccOptions;
 use pumpkin_solver::results::solution_iterator::IteratedSolution;
 use pumpkin_solver::results::OptimisationResult;
 use pumpkin_solver::results::ProblemSolution;
@@ -51,6 +52,9 @@ pub(crate) struct FlatZincOptions {
 
     /// Options used for the cumulative constraint (see [`cumulative`]).
     pub(crate) cumulative_options: CumulativeOptions,
+
+    /// Options used for global cardinality constraint
+    pub(crate) gcc_options: GccOptions,
 
     /// Determines which type of search is performed by the solver
     pub(crate) optimisation_strategy: OptimisationStrategy,

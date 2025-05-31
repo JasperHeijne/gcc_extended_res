@@ -29,9 +29,7 @@ mod clause;
 mod constraint_poster;
 mod cumulative;
 mod element;
-mod global_cardinality_extended_resolution;
-pub mod global_cardinality_lower_upper;
-
+mod global_cardinality;
 use std::num::NonZero;
 
 pub use all_different::*;
@@ -41,7 +39,7 @@ pub use clause::*;
 pub use constraint_poster::*;
 pub use cumulative::*;
 pub use element::*;
-pub use global_cardinality_extended_resolution::*;
+pub use global_cardinality::*;
 
 use crate::engine::propagation::Propagator;
 use crate::propagators::ReifiedPropagator;

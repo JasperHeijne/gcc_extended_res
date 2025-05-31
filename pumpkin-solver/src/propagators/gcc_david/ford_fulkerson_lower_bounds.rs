@@ -120,7 +120,7 @@ where
         return *edge.weight() - flow;
     } else {
         let end_point = NodeIndexable::to_index(&network, vertex);
-        panic!("Illegal endpoint {}", end_point);
+        panic!("Illegal endpoint {end_point}");
     }
 }
 
@@ -135,7 +135,7 @@ where
         edge.source()
     } else {
         let end_point = NodeIndexable::to_index(&network, vertex);
-        panic!("Illegal endpoint {}", end_point);
+        panic!("Illegal endpoint {end_point}");
     }
 }
 
@@ -200,7 +200,7 @@ where
         flow + delta
     } else {
         let end_point = NodeIndexable::to_index(&network, vertex);
-        panic!("Illegal endpoint {}", end_point);
+        panic!("Illegal endpoint {end_point}");
     }
 }
 

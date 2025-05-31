@@ -168,7 +168,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
 
         let statistics = Statistics { test: 0 };
 
-        statistic_logger.log_statistic(format!("{:?}", statistics));
+        statistic_logger.log_statistic(format!("{statistics:?}"));
     }
 
     fn priority(&self) -> u32 {

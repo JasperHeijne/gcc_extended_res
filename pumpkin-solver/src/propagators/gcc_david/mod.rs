@@ -143,8 +143,7 @@ fn graph_to_dot<N: ToString, E: std::fmt::Display>(
         let default_color = "black".to_owned();
         let color = node_colors.get(&node).unwrap_or(&default_color);
         dot_string.push_str(&format!(
-            "  {} [label=\"{}\", color=\"{}\"];\n",
-            node_name, label, color
+            "  {node_name} [label=\"{label}\", color=\"{color}\"];\n"
         ));
     }
 

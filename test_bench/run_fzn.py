@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 num_cores = os.cpu_count()
 print(f"Number of CPU cores: {num_cores}")
-timeout = "10000"  # Timeout in milliseconds
+timeout = "20000"  # Timeout in milliseconds
 
 methods = ['extended-resolution-with-regin',
            'basic-filter',
@@ -22,7 +22,7 @@ vaccine_runs_dir = os.path.join(runs_dir, "vaccine")
 os.makedirs(community_runs_dir, exist_ok=True)
 os.makedirs(vaccine_runs_dir, exist_ok=True)
 
-cargo_command = "cargo run --bin pumpkin-solver -- -s -v --gcc-propagation-method"
+cargo_command = "./target/release/pumpkin-solver -s -v --gcc-propagation-method"
 
 def run_command(method, fzn_path, out_dir, err_dir):
     output_file = os.path.join(out_dir, f"{method}_output.txt")

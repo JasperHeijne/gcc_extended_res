@@ -6,6 +6,7 @@ use crate::basic_types::HashMap;
 use crate::propagators::gcc_extended_resolution::equality::GccEquality;
 use crate::propagators::gcc_extended_resolution::exclusion::GccExclusion;
 use crate::propagators::gcc_extended_resolution::inequality::GccInequality;
+use crate::propagators::gcc_extended_resolution::inequality_sets::GccInequalitySets;
 use crate::propagators::gcc_extended_resolution::intersection::GccIntersection;
 use crate::propagators::gcc_extended_resolution::transitive::GccTransitive;
 use crate::propagators::gcc_extended_resolution::upper_bound::GccUpperBound;
@@ -100,6 +101,10 @@ impl<Var: IntegerVariable> Constraint for GccExtendedResolution<Var> {
             self.equalities.clone(),
         )
         .post(solver, tag)?;
+
+        // GCC inequality sets (greedy cliques)
+        GccInequalitySets::new(self.variables.clone(), self.equalities.clone())
+            .post(solver, tag)?;
 
         Ok(())
     }

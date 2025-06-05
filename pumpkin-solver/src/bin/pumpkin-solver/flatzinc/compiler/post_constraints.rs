@@ -337,8 +337,6 @@ fn compile_gcc_imp(
         })
         .collect();
 
-    dbg!(&options.gcc_options.propagation_method);
-
     Ok(match options.gcc_options.propagation_method {
         pumpkin_solver::options::GccPropagatorMethod::Bruteforce => {
             global_cardinality_lower_upper(variables, values, GccMethod::Bruteforce)

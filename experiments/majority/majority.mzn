@@ -36,7 +36,7 @@ constraint forall(i in 1..d) (
     )
 );
 % at least one decision must have a majority
-constraint exists(i in 1..n)(require_majority[i]);
+constraint exists(i in 1..d)(require_majority[i]);
 
 
 % each decision can be chosen by up to (majority - 1) people

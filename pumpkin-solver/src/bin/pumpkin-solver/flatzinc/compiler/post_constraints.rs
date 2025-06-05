@@ -207,6 +207,7 @@ pub(crate) fn run(
             "pumpkin_cumulative" => compile_cumulative(context, exprs, &options)?,
             "pumpkin_cumulative_var" => todo!("The `cumulative` constraint with variable duration/resource consumption/bound is not implemented yet!"),
             "pumpkin_gcc" => compile_gcc(context, exprs, &options)?,
+            "pumpkin_gcc_imp" => compile_gcc_imp(context, exprs, &options)?,
             unknown => todo!("unsupported constraint {unknown}"),
         };
 
@@ -307,6 +308,68 @@ fn compile_gcc(
                 .is_ok()
                 && global_cardinality_lower_upper(variables, values, GccMethod::ReginArcConsistent)
                     .post(context.solver, None)
+                    .is_ok()
+        }
+    })
+}
+
+fn compile_gcc_imp(
+    context: &mut CompilationContext,
+    exprs: &[flatzinc::Expr],
+    options: &FlatZincOptions,
+) -> Result<bool, FlatZincError> {
+    check_parameters!(exprs, 5, "pumpkin_gcc_imp");
+
+    let variables = context.resolve_integer_variable_array(&exprs[0])?.to_vec();
+    let cover = context.resolve_array_integer_constants(&exprs[1])?.to_vec();
+    let lbound = context.resolve_array_integer_constants(&exprs[2])?.to_vec();
+    let ubound = context.resolve_array_integer_constants(&exprs[3])?.to_vec();
+    let reif = context.resolve_bool_variable(&exprs[4])?;
+
+    let values: Vec<Values> = cover
+        .iter()
+        .zip(lbound)
+        .zip(ubound)
+        .map(|((c, l), u)| Values {
+            value: *c,
+            omin: l as u32,
+            omax: u as u32,
+        })
+        .collect();
+
+    dbg!(&options.gcc_options.propagation_method);
+
+    Ok(match options.gcc_options.propagation_method {
+        pumpkin_solver::options::GccPropagatorMethod::Bruteforce => {
+            global_cardinality_lower_upper(variables, values, GccMethod::Bruteforce)
+                .implied_by(context.solver, reif, None)
+                .is_ok()
+        }
+        pumpkin_solver::options::GccPropagatorMethod::BasicFilter => {
+            global_cardinality_lower_upper(variables, values, GccMethod::BasicFilter)
+                .implied_by(context.solver, reif, None)
+                .is_ok()
+        }
+        pumpkin_solver::options::GccPropagatorMethod::ReginArcConsistent => {
+            global_cardinality_lower_upper(variables, values, GccMethod::ReginArcConsistent)
+                .implied_by(context.solver, reif, None)
+                .is_ok()
+        }
+        pumpkin_solver::options::GccPropagatorMethod::ExtendedResolution => {
+            let extended_variables: HashMap<(usize, usize), pumpkin_solver::variables::Literal> =
+                context.init_extended_equality_variables(&variables);
+            gcc_extended_resolution(variables, values, extended_variables)
+                .implied_by(context.solver, reif, None)
+                .is_ok()
+        }
+        pumpkin_solver::options::GccPropagatorMethod::ExtendedResolutionWithRegin => {
+            let extended_variables: HashMap<(usize, usize), pumpkin_solver::variables::Literal> =
+                context.init_extended_equality_variables(&variables);
+            gcc_extended_resolution(variables.clone(), values.clone(), extended_variables)
+                .implied_by(context.solver, reif, None)
+                .is_ok()
+                && global_cardinality_lower_upper(variables, values, GccMethod::ReginArcConsistent)
+                    .implied_by(context.solver, reif, None)
                     .is_ok()
         }
     })

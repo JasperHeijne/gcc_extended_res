@@ -110,7 +110,7 @@ impl<Var: IntegerVariable> Constraint for GccExtendedResolution<Var> {
         _reification_literal: Literal,
         _tag: Option<NonZero<u32>>,
     ) -> Result<(), crate::ConstraintOperationError> {
-        todo!("half-reinfication not implemented")
+        todo!("half-reification not implemented")
     }
 }
 

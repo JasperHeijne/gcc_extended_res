@@ -28,11 +28,12 @@ array[1..d] of int: n_ub = [n | i in 1..d];
 array[1..d] of int: cover = [i | i in 1..d];
 
 constraint forall(i in 1..d) (
-    require_majority[i] -> global_cardinality_low_up(
+    pumpkin_gcc_imp(
         vote,
         cover,
         [ if i == j then majority else 0 endif | j in 1..d ],
-        n_ub
+        n_ub,
+        require_majority[i]
     )
 );
 % at least one decision must have a majority

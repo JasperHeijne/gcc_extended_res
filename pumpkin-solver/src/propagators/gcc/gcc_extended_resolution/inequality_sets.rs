@@ -12,12 +12,12 @@ use crate::variables::Literal;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-pub(crate) struct GccInequalitySets<Var: IntegerVariable + 'static> {
+pub(crate) struct GccInequalitySets<Var> {
     variables: Box<[Var]>,
     equalities: HashMap<(usize, usize), Literal>,
 }
 
-impl<Var: IntegerVariable> GccInequalitySets<Var> {
+impl<Var> GccInequalitySets<Var> {
     pub(crate) fn new(
         variables: impl IntoIterator<Item = Var>,
         equalities: HashMap<(usize, usize), Literal>,
@@ -51,7 +51,7 @@ impl<Var: IntegerVariable> GccInequalitySets<Var> {
     }
 }
 
-impl<Var: IntegerVariable> Propagator for GccInequalitySets<Var> {
+impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
     fn name(&self) -> &str {
         "GCC extended resolution inequality sets"
     }
@@ -188,7 +188,7 @@ impl<Var: IntegerVariable> Propagator for GccInequalitySets<Var> {
 
             // Get variables that participate in the flow
             for ((u, v), cap) in graph.residual_capacities {
-                if !included_vars.contains(&(v - 1)) && cap == 1 && u > 0 && v > 0 && v <= vars_len
+                if cap == 1 && u > 0 && v > 0 && v <= vars_len && !included_vars.contains(&(v - 1))
                 {
                     let _ = included_vars.insert(v - 1);
                 }
@@ -498,4 +498,134 @@ fn tarjans_algorithm(graph: &Graph) -> (HashMap<usize, usize>, Vec<Vec<usize>>) 
     }
 
     return (node_to_scc_root, sccs);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::engine::test_solver::TestSolver;
+
+    #[test]
+    fn test_trivial() {
+        let mut solver = TestSolver::default();
+
+        let x1 = solver.new_variable(1, 1);
+        let x2 = solver.new_variable(1, 2);
+        let x3 = solver.new_variable(5, 5);
+
+        let mut equalities: HashMap<(usize, usize), Literal> = HashMap::default();
+
+        let lit_false = solver.new_literal();
+        let _ = solver.set_literal(lit_false, false);
+        let _ = equalities.insert((0, 1), lit_false);
+        let _ = equalities.insert((0, 2), lit_false);
+        let _ = equalities.insert((1, 2), lit_false);
+
+        let _ = solver
+            .new_propagator(GccInequalitySets::new([x1, x2, x3], equalities))
+            .expect("Expected no error");
+
+        solver.assert_bounds(x2, 2, 2);
+    }
+
+    #[test]
+    fn test_unsat() {
+        let mut solver = TestSolver::default();
+
+        let x1 = solver.new_variable(0, 1);
+        let x2 = solver.new_variable(0, 1);
+        let x3 = solver.new_variable(0, 1);
+
+        let mut equalities: HashMap<(usize, usize), Literal> = HashMap::default();
+
+        let lit_false = solver.new_literal();
+        let _ = solver.set_literal(lit_false, false);
+        let _ = equalities.insert((0, 1), lit_false);
+        let _ = equalities.insert((0, 2), lit_false);
+        let _ = equalities.insert((1, 2), lit_false);
+
+        let _ = solver
+            .new_propagator(GccInequalitySets::new([x1, x2, x3], equalities))
+            .expect_err("Expected error");
+    }
+
+    #[test]
+    fn test_bounds_propagation() {
+        let mut solver = TestSolver::default();
+
+        let x1 = solver.new_variable(0, 3);
+        let x2 = solver.new_variable(0, 3);
+        let x3 = solver.new_variable(0, 3);
+        let x4 = solver.new_variable(1, 2);
+        let x5 = solver.new_variable(-2, 6);
+        let x6 = solver.new_variable(1, 6);
+
+        let variables = [x1, x2, x3, x4, x5, x6];
+
+        let lit_false = solver.new_literal();
+        let _ = solver.set_literal(lit_false, false);
+
+        let mut equalities: HashMap<(usize, usize), Literal> = HashMap::default();
+        for i in 0..variables.len() {
+            for j in (i + 1)..variables.len() {
+                let _ = equalities.insert((i, j), lit_false);
+            }
+        }
+
+        let _ = solver
+            .new_propagator(GccInequalitySets::new(variables, equalities))
+            .expect("Expected no error");
+
+        solver.assert_bounds(x5, -2, 6);
+        for i in 0..=3 {
+            assert_eq!(false, solver.contains(x5, i));
+        }
+        solver.assert_bounds(x6, 4, 6);
+    }
+
+    #[test]
+    fn test_equal_variables_not_affected() {
+        let mut solver = TestSolver::default();
+
+        let x1 = solver.new_variable(0, 3);
+        let x2 = solver.new_variable(0, 3);
+        let x3 = solver.new_variable(0, 3);
+        let x4 = solver.new_variable(1, 2);
+        let x5 = solver.new_variable(-2, 6);
+        let x6 = solver.new_variable(1, 6);
+        let x7 = solver.new_variable(0, 3);
+
+        let variables = [x1, x2, x3, x4, x5, x6, x7];
+
+        let lit_false = solver.new_literal();
+        let lit_true = solver.new_literal();
+        let lit_unassigned = solver.new_literal();
+        let _ = solver.set_literal(lit_false, false);
+        let _ = solver.set_literal(lit_true, true);
+
+        let mut equalities: HashMap<(usize, usize), Literal> = HashMap::default();
+        for i in 0..6 {
+            for j in (i + 1)..6 {
+                let _ = equalities.insert((i, j), lit_false);
+            }
+        }
+
+        let _ = equalities.insert((0, 6), lit_true);
+
+        for i in 1..6 {
+            let _ = equalities.insert((i, 6), lit_unassigned);
+        }
+
+        let _ = solver
+            .new_propagator(GccInequalitySets::new(variables, equalities))
+            .expect("Expected no error");
+
+        solver.assert_bounds(x5, -2, 6);
+        for i in 0..=3 {
+            assert_eq!(false, solver.contains(x5, i));
+        }
+        solver.assert_bounds(x6, 4, 6);
+
+        solver.assert_bounds(x7, 0, 3);
+    }
 }

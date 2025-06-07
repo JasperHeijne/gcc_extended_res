@@ -5,7 +5,7 @@ use crate::engine::propagation::Propagator;
 use crate::engine::propagation::ReadDomains;
 use crate::engine::DomainEvents;
 use crate::predicate;
-use crate::predicates::PropositionalConjunction;
+use crate::predicates::{Predicate, PropositionalConjunction};
 use crate::variables::IntegerVariable;
 use crate::variables::Literal;
 
@@ -37,6 +37,17 @@ impl<Var: IntegerVariable> GccInequalitySets<Var> {
             .get(&(x, y))
             .or(self.equalities.get(&(y, x)))
             .expect("E_{x,y} or E_{y,x} must be defined")
+    }
+
+    fn get_inequality_explanation(&self, vars: &Vec<usize>) -> Vec<Predicate> {
+        let mut reason = Vec::new();
+        for i in 0..vars.len() {
+            for j in (i + 1)..vars.len() {
+                let literal = self.get_equality(vars[i], vars[j]);
+                reason.push(!predicate!(literal == 0));
+            }
+        }
+        reason
     }
 }
 
@@ -80,6 +91,7 @@ impl<Var: IntegerVariable> Propagator for GccInequalitySets<Var> {
         let mut found_valid_clique = false;
 
         for (i, &var_index) in variable_indices.iter().enumerate() {
+            // For each variable, we take it and greedily try to find a set of variables that are pairwise unequal
             inequality_set = HashSet::default();
             let _ = inequality_set.insert(var_index);
 
@@ -121,12 +133,21 @@ impl<Var: IntegerVariable> Propagator for GccInequalitySets<Var> {
 
         let mut graph = Graph::new();
 
+        // In the graph we keep track of nodes using usize which work as their IDs
+        // 0 : source
+        // 1 ..= vars_len : nodes for variables
+        // vars_len+1 .. (however many needed) : nodes for values
+        // (last) : sink
+
         let source = 0;
 
+        // Connect source to each variable
         for i in 1..=vars_len {
             graph.add_edge(source, i);
         }
 
+        // Connect each variable to its domain
+        // Maintain matching `value -> node_id` and `node_id -> value`
         for (var_node_id, &var_ind) in chosen_variables.clone().iter().enumerate() {
             for x in self.variables[var_ind].lower_bound(context.assignments)
                 ..=self.variables[var_ind].upper_bound(context.assignments)
@@ -150,10 +171,12 @@ impl<Var: IntegerVariable> Propagator for GccInequalitySets<Var> {
 
         let sink = next_value_id;
 
+        // Connect each value to sink
         for i in vars_len + 1..sink {
             graph.add_edge(i, sink);
         }
 
+        // Maximize flow
         let max_flow = graph.ford_fulkerson(source, sink);
 
         if max_flow < vars_len as i32 {
@@ -163,7 +186,7 @@ impl<Var: IntegerVariable> Propagator for GccInequalitySets<Var> {
             // of all variables that are part of the flow + one other variable
             let mut included_vars: HashSet<usize> = HashSet::default();
 
-            // Get variables that perticipate in the flow
+            // Get variables that participate in the flow
             for ((u, v), cap) in graph.residual_capacities {
                 if !included_vars.contains(&(v - 1)) && cap == 1 && u > 0 && v > 0 && v <= vars_len
                 {
@@ -179,19 +202,79 @@ impl<Var: IntegerVariable> Propagator for GccInequalitySets<Var> {
                 }
             }
 
-            return Err(Inconsistency::Conflict(
-                included_vars
-                    .iter()
-                    .map(|&i| self.variables[chosen_variables[i]].clone())
-                    .into_iter()
-                    .flat_map(|var| var.describe_domain(context.assignments))
-                    .collect(),
-            ));
+            let mut reason = self.get_inequality_explanation(&chosen_variables);
+            let all_diff_reason: Vec<Predicate> = included_vars
+                .iter()
+                .map(|&i| self.variables[chosen_variables[i]].clone())
+                .into_iter()
+                .flat_map(|var| var.describe_domain(context.assignments))
+                .collect();
+            reason.extend(all_diff_reason);
+            return Err(Inconsistency::Conflict(PropositionalConjunction::new(
+                reason,
+            )));
         }
 
         // We have a valid flow, analyze connected components to prune values
 
-        todo!()
+        // Run Tarjan's algorithm and obtain mapping node -> its SCC root
+        let (node_to_scc_root, sccs) = tarjans_algorithm(&graph);
+
+        // Iterate over SCCs in reverse topological order
+        for scc in sccs.iter().rev() {
+            for &v in scc {
+                if v == 0 || v > vars_len {
+                    // Skip nodes that aren't variables
+                    continue;
+                }
+
+                if let Some(neighbours) = &graph.adjacency_list.get(&v).cloned() {
+                    for &u in neighbours {
+                        // Skip `variable -> source edges`
+                        if u == source {
+                            continue;
+                        }
+
+                        // Check variable and value are in different SCCs
+                        if node_to_scc_root[&v] == node_to_scc_root[&u] {
+                            continue;
+                        }
+
+                        // Make sure this is a `variable -> value` edge in the residual graph
+                        if graph.residual_capacities[&(v, u)] != 1 {
+                            continue;
+                        }
+
+                        let mut reason = self.get_inequality_explanation(&chosen_variables);
+                        let mut connected: HashSet<usize> = HashSet::default();
+
+                        // Find all nodes connected to the value
+                        let _ = graph.dfs(u, sink + 1, &mut connected, &mut Vec::new());
+
+                        // Filter out the variable nodes and use them in explanation
+                        for node in connected {
+                            if node > 0 && node <= vars_len {
+                                reason.extend(
+                                    self.variables[chosen_variables[node - 1]]
+                                        .describe_domain(&context.assignments),
+                                );
+                            }
+                        }
+
+                        PropagationContextMut::remove(
+                            &mut context,
+                            &self.variables[chosen_variables[v - 1]],
+                            ids_to_values[&u],
+                            PropositionalConjunction::new(reason.clone()),
+                        )?;
+
+                        graph.remove_edge(v, u);
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -253,7 +336,6 @@ impl Graph {
         let _ = visited.insert(cur);
 
         // Go through neighbours and recursively call on edges that have residual_capacity == 1
-        // (those are the ones available in the residual graph)
         let neighbours_option = self.adjacency_list.get(&cur);
         match neighbours_option {
             None => (),
@@ -307,44 +389,11 @@ impl Graph {
 
         return max_flow;
     }
-
-    fn find_connected_components(&self) -> HashMap<usize, Vec<usize>> {
-        // eprintln!("residual capacities: {:?}", self.residual_capacities);
-        let mut ccs = HashMap::default();
-        for &node in self.adjacency_list.keys() {
-            let mut reachable = Vec::new();
-            let mut stack = vec![node];
-            let mut visited: HashSet<usize> = HashSet::default();
-
-            while let Some(current) = stack.pop() {
-                if visited.insert(current) {
-                    reachable.push(current);
-                    if let Some(neighbors) = self.adjacency_list.get(&current) {
-                        for &neighbor in neighbors {
-                            if !visited.contains(&neighbor) {
-                                if let Some(&capacity) =
-                                    self.residual_capacities.get(&(current, neighbor))
-                                {
-                                    if capacity > 0 {
-                                        stack.push(neighbor);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            let _ = ccs.insert(node, reachable);
-        }
-        ccs
-    }
 }
 
 // Runs Tarjan's algorithm finding strongly connected components in the graph
 // Implemented based on https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm
-// However, in our case we don't need all the components, just the mapping node -> its component root,
-// as just have to check if two nodes are in the same strongly connected component, or not
-fn tarjans_algorithm(graph: &Graph) -> HashMap<usize, usize> {
+fn tarjans_algorithm(graph: &Graph) -> (HashMap<usize, usize>, Vec<Vec<usize>>) {
     let mut index = 0;
     let mut stack = Vec::new();
     let mut indices = HashMap::default();
@@ -353,6 +402,7 @@ fn tarjans_algorithm(graph: &Graph) -> HashMap<usize, usize> {
 
     let mut scc_count = 0;
     let mut node_to_scc_root = HashMap::default();
+    let mut sccs = Vec::new();
 
     fn strongconnect(
         node: usize,
@@ -364,6 +414,7 @@ fn tarjans_algorithm(graph: &Graph) -> HashMap<usize, usize> {
         scc_count: &mut i32,
         graph: &Graph,
         node_to_scc_root: &mut HashMap<usize, usize>,
+        sccs: &mut Vec<Vec<usize>>,
     ) {
         // Set the depth index for the node to the smallest unused index
         let _ = indices.insert(node, *index);
@@ -395,6 +446,7 @@ fn tarjans_algorithm(graph: &Graph) -> HashMap<usize, usize> {
                                 scc_count,
                                 graph,
                                 node_to_scc_root,
+                                sccs,
                             );
                             *lowlink.get_mut(&node).unwrap() =
                                 lowlink[&node].min(lowlink[&neighbour]);
@@ -412,15 +464,18 @@ fn tarjans_algorithm(graph: &Graph) -> HashMap<usize, usize> {
 
         // If node is a root node, pop the stack and generate an SCC, mapping all of its nodes in the `node_to_scc_root` map
         if lowlink[&node] == indices[&node] {
-            // create a new strongly connected component
+            // Create a new strongly connected component
+            let mut new_scc = Vec::new();
             while let Some(w) = stack.pop() {
                 let _ = on_stack.remove(&w);
                 let _ = node_to_scc_root.insert(w, *scc_count as usize);
+                new_scc.push(w);
                 if w == node {
                     break;
                 }
             }
             *scc_count += 1;
+            sccs.push(new_scc);
         }
     }
 
@@ -437,9 +492,10 @@ fn tarjans_algorithm(graph: &Graph) -> HashMap<usize, usize> {
                 &mut scc_count,
                 graph,
                 &mut node_to_scc_root,
+                &mut sccs,
             );
         }
     }
 
-    return node_to_scc_root;
+    return (node_to_scc_root, sccs);
 }

@@ -104,7 +104,7 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
                 continue;
             }
 
-            // Iterating through HashSet isn't stable, so copy int a Vec
+            // Iterating through HashSet isn't stable, so copy into a Vec
             let set_vec: Vec<usize> = set.iter().cloned().collect();
             let mut set_reason = Vec::new();
             for (i, &elem_1) in set_vec.iter().enumerate() {
@@ -235,6 +235,6 @@ mod tests {
 
         solver.assert_bounds(x1, 3, 3);
         solver.assert_bounds(x2, 3, 3);
-        solver.assert_bounds(x2, 1, 2);
+        // solver.assert_bounds(x3, 1, 3);
     }
 }

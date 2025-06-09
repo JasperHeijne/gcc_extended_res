@@ -1,16 +1,19 @@
-use crate::basic_types::{HashMap, HashSet, Inconsistency};
+use rand::seq::SliceRandom;
+use rand::thread_rng;
+
+use crate::basic_types::HashMap;
+use crate::basic_types::HashSet;
+use crate::basic_types::Inconsistency;
 use crate::engine::propagation::LocalId;
 use crate::engine::propagation::PropagationContextMut;
 use crate::engine::propagation::Propagator;
 use crate::engine::propagation::ReadDomains;
 use crate::engine::DomainEvents;
 use crate::predicate;
-use crate::predicates::{Predicate, PropositionalConjunction};
+use crate::predicates::Predicate;
+use crate::predicates::PropositionalConjunction;
 use crate::variables::IntegerVariable;
 use crate::variables::Literal;
-
-use rand::seq::SliceRandom;
-use rand::thread_rng;
 
 pub(crate) struct GccInequalitySets<Var> {
     variables: Box<[Var]>,
@@ -39,7 +42,7 @@ impl<Var> GccInequalitySets<Var> {
             .expect("E_{x,y} or E_{y,x} must be defined")
     }
 
-    fn get_inequality_explanation(&self, vars: &Vec<usize>) -> Vec<Predicate> {
+    fn get_inequality_explanation(&self, vars: &[usize]) -> Vec<Predicate> {
         let mut reason = Vec::new();
         for i in 0..vars.len() {
             for j in (i + 1)..vars.len() {
@@ -91,21 +94,23 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
         let mut found_valid_clique = false;
 
         for (i, &var_index) in variable_indices.iter().enumerate() {
-            // For each variable, we take it and greedily try to find a set of variables that are pairwise unequal
+            // For each variable, we take it and greedily try to find a set of variables that are
+            // pairwise unequal
             inequality_set = HashSet::default();
             let _ = inequality_set.insert(var_index);
 
-            for j in (i + 1)..self.variables.len() {
+            // for j in (i + 1)..self.variables.len() {
+            for &candidate_var in variable_indices.iter().skip(i + 1) {
                 let mut all_unequal = true;
                 for set_member in inequality_set.clone() {
-                    let var = self.get_equality(variable_indices[j], set_member);
+                    let var = self.get_equality(candidate_var, set_member);
                     if !context.is_literal_false(&var) {
                         all_unequal = false;
                         break;
                     }
                 }
                 if all_unequal {
-                    let _ = inequality_set.insert(variable_indices[j]);
+                    let _ = inequality_set.insert(candidate_var);
                 }
             }
 
@@ -152,7 +157,7 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
             for x in self.variables[var_ind].lower_bound(context.assignments)
                 ..=self.variables[var_ind].upper_bound(context.assignments)
             {
-                if !self.variables[var_ind].contains(&context.assignments, x) {
+                if !self.variables[var_ind].contains(context.assignments, x) {
                     continue;
                 }
                 if !values_to_ids.contains_key(&x) {
@@ -206,7 +211,6 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
             let all_diff_reason: Vec<Predicate> = included_vars
                 .iter()
                 .map(|&i| self.variables[chosen_variables[i]].clone())
-                .into_iter()
                 .flat_map(|var| var.describe_domain(context.assignments))
                 .collect();
             reason.extend(all_diff_reason);
@@ -256,7 +260,7 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
                             if node > 0 && node <= vars_len {
                                 reason.extend(
                                     self.variables[chosen_variables[node - 1]]
-                                        .describe_domain(&context.assignments),
+                                        .describe_domain(context.assignments),
                                 );
                             }
                         }
@@ -341,7 +345,8 @@ impl Graph {
             None => (),
             Some(neighbours) => {
                 for &neighbour in neighbours {
-                    // Check if neighbour wasn't visited and if the edge has residual capacity == 1 in that direction
+                    // Check if neighbour wasn't visited and if the edge has residual capacity == 1
+                    // in that direction
                     if !visited.contains(&neighbour)
                         && *self
                             .residual_capacities
@@ -359,7 +364,7 @@ impl Graph {
             }
         }
 
-        return false;
+        false
     }
 
     // Runs Ford-Fulkerson for a given source and sink
@@ -387,7 +392,7 @@ impl Graph {
             max_flow += 1;
         }
 
-        return max_flow;
+        max_flow
     }
 }
 
@@ -404,6 +409,7 @@ fn tarjans_algorithm(graph: &Graph) -> (HashMap<usize, usize>, Vec<Vec<usize>>) 
     let mut node_to_scc_root = HashMap::default();
     let mut sccs = Vec::new();
 
+    #[allow(clippy::too_many_arguments)]
     fn strongconnect(
         node: usize,
         index: &mut i32,
@@ -435,7 +441,8 @@ fn tarjans_algorithm(graph: &Graph) -> (HashMap<usize, usize>, Vec<Vec<usize>>) 
                         > 0
                     {
                         if !indices.contains_key(&neighbour) {
-                            // Successor of the node (the neighbour) has not yet been visited; recurse on it
+                            // Successor of the node (the neighbour) has not yet been visited;
+                            // recurse on it
                             strongconnect(
                                 neighbour,
                                 index,
@@ -452,8 +459,9 @@ fn tarjans_algorithm(graph: &Graph) -> (HashMap<usize, usize>, Vec<Vec<usize>>) 
                                 lowlink[&node].min(lowlink[&neighbour]);
                         } else if on_stack.contains(&neighbour) {
                             // Neighbour is in stack and hence in the current SCC
-                            // If neighbour is not on stack, then (node, neighbour) is an edge pointing to
-                            // an SCC already found and must be ignored
+                            // If neighbour is not on stack, then (node, neighbour) is an edge
+                            // pointing to an SCC already found and must
+                            // be ignored
                             *lowlink.get_mut(&node).unwrap() =
                                 lowlink[&node].min(indices[&neighbour]);
                         }
@@ -462,7 +470,8 @@ fn tarjans_algorithm(graph: &Graph) -> (HashMap<usize, usize>, Vec<Vec<usize>>) 
             }
         }
 
-        // If node is a root node, pop the stack and generate an SCC, mapping all of its nodes in the `node_to_scc_root` map
+        // If node is a root node, pop the stack and generate an SCC, mapping all of its nodes in
+        // the `node_to_scc_root` map
         if lowlink[&node] == indices[&node] {
             // Create a new strongly connected component
             let mut new_scc = Vec::new();
@@ -497,7 +506,7 @@ fn tarjans_algorithm(graph: &Graph) -> (HashMap<usize, usize>, Vec<Vec<usize>>) 
         }
     }
 
-    return (node_to_scc_root, sccs);
+    (node_to_scc_root, sccs)
 }
 
 #[cfg(test)]
@@ -578,7 +587,7 @@ mod tests {
 
         solver.assert_bounds(x5, -2, 6);
         for i in 0..=3 {
-            assert_eq!(false, solver.contains(x5, i));
+            assert!(!solver.contains(x5, i));
         }
         solver.assert_bounds(x6, 4, 6);
     }
@@ -622,7 +631,7 @@ mod tests {
 
         solver.assert_bounds(x5, -2, 6);
         for i in 0..=3 {
-            assert_eq!(false, solver.contains(x5, i));
+            assert!(!solver.contains(x5, i));
         }
         solver.assert_bounds(x6, 4, 6);
 

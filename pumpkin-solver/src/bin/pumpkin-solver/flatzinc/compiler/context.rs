@@ -452,7 +452,7 @@ impl CompilationContext<'_> {
         for (i, a) in vars.iter().enumerate() {
             for (j, b) in vars.iter().enumerate() {
                 // Ensure a has lower id than b
-                if a.id > b.id {
+                if a.id >= b.id {
                     continue;
                 }
                 let literal = self

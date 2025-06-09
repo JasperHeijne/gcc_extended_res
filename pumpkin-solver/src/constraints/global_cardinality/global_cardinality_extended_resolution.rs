@@ -16,7 +16,7 @@ struct GccExtendedResolution<Var: IntegerVariable + 'static> {
     equality_constraints: Vec<GccEquality<Var>>,
     exclusions: Vec<GccExclusion<Var>>,
     inequalities: Vec<GccInequality<Var>>,
-    upper_bound: GccUpperBound<Var>,
+    upper_bound: Option<GccUpperBound<Var>>,
 }
 
 impl<Var: IntegerVariable + 'static> GccExtendedResolution<Var> {
@@ -99,6 +99,8 @@ impl<Var: IntegerVariable + 'static> GccExtendedResolution<Var> {
         let upper_bound: GccUpperBound<Var> =
             GccUpperBound::new(variables.clone(), values.clone(), equalities.clone());
 
+        let upper_bound = Some(upper_bound);
+
         Self {
             intersections,
             transitives,
@@ -139,7 +141,9 @@ impl<Var: IntegerVariable + 'static> Constraint for GccExtendedResolution<Var> {
         self.inequalities
             .into_iter()
             .try_for_each(|c| c.post(solver, tag))?;
-        self.upper_bound.post(solver, tag)
+        self.upper_bound
+            .into_iter()
+            .try_for_each(|c| c.post(solver, tag))
     }
 
     fn implied_by(
@@ -163,6 +167,8 @@ impl<Var: IntegerVariable + 'static> Constraint for GccExtendedResolution<Var> {
         self.inequalities
             .into_iter()
             .try_for_each(|c| c.implied_by(solver, reif, tag))?;
-        self.upper_bound.implied_by(solver, reif, tag)
+        self.upper_bound
+            .into_iter()
+            .try_for_each(|c| c.implied_by(solver, reif, tag))
     }
 }

@@ -88,6 +88,8 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
             }
         }
 
+        dbg!(&uf);
+
         let mut assigned: HashMap<i32, Vec<&Var>> = HashMap::default();
         for var in &self.variables {
             if context.is_fixed(var) {
@@ -128,6 +130,9 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
                 // todo: improve somehow
                 for var_index in set.iter() {
                     let parent_index = uf.find(*var_index);
+                    if parent_index == *var_index {
+                        continue;
+                    }
                     let literal = self.get_equality(*var_index, parent_index);
                     reason.push(predicate!(literal == 1));
                 }
@@ -150,5 +155,49 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::GccUpperBound;
+    use crate::basic_types::HashMap;
+    use crate::engine::test_solver::TestSolver;
+    use crate::propagators::gcc_extended_resolution::generate_equalities;
+
+    #[test]
+    fn test_eliminate_from_set() {
+        let mut solver = TestSolver::default();
+
+        let x1 = solver.new_variable(1, 3);
+        let x2 = solver.new_variable(1, 3);
+        let x3 = solver.new_variable(1, 3);
+
+        let values: HashMap<i32, (usize, usize)> =
+            HashMap::from_iter([(1, (0, 1)), (2, (0, 1)), (3, (0, 2))]);
+
+        let equalities = generate_equalities(&mut solver, &[x1, x2, x3]);
+
+        let propagator = GccUpperBound {
+            variables: Box::new([x1, x2, x3]),
+            values,
+            equalities: equalities.clone(),
+        };
+
+        let propagator = solver.new_propagator(propagator).expect("no empty domains");
+        solver
+            .propagate_until_fixed_point(propagator)
+            .expect("should not conflict");
+
+        solver.set_literal(equalities[&(0, 1)], true).unwrap(); // x1 = x2
+
+        solver
+            .propagate_until_fixed_point(propagator)
+            .expect("should not conflict");
+
+        solver.assert_bounds(x1, 3, 3);
+        solver.assert_bounds(x2, 3, 3);
+        solver.assert_bounds(x2, 1, 2);
     }
 }

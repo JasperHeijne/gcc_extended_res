@@ -1,6 +1,3 @@
-use rand::seq::SliceRandom;
-use rand::thread_rng;
-
 use crate::basic_types::HashMap;
 use crate::basic_types::HashSet;
 use crate::basic_types::Inconsistency;
@@ -63,10 +60,8 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
         &mut self,
         context: &mut crate::engine::propagation::PropagatorInitialisationContext,
     ) -> Result<(), PropositionalConjunction> {
-        // In theory, we could run this propagator for every change in domains of variables
-        // but this would be rather wasteful, right?
         for (i, var) in self.variables.iter().enumerate() {
-            let _ = context.register(var.clone(), DomainEvents::ASSIGN, LocalId::from(i as u32));
+            let _ = context.register(var.clone(), DomainEvents::ANY_INT, LocalId::from(i as u32));
         }
 
         for ((i, j), literal) in self.equalities.iter() {
@@ -86,9 +81,31 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
         &self,
         mut context: PropagationContextMut,
     ) -> crate::basic_types::PropagationStatusCP {
-        // Consider variables in random order
+        // Order variables using heuristic
+        // - descendingly on the number of inequalities the variable is involved in
+        // - break ties by ordering ascendingly on domain size
+        // - lastly break ties using the original ordering
+        let mut inequalities_count = vec![0; self.variables.len()];
+        let mut domain_sizes = vec![0; self.variables.len()];
+
+        for i in 0..self.variables.len() {
+            for j in (i + 1)..self.variables.len() {
+                let eq_literal = self.get_equality(i, j);
+                if context.is_literal_false(&eq_literal) {
+                    inequalities_count[i] += 1;
+                    inequalities_count[j] += 1;
+                }
+            }
+            domain_sizes[i] = self.variables[i].describe_domain(context.assignments).len();
+        }
+
         let mut variable_indices: Vec<usize> = (0..self.variables.len()).collect();
-        variable_indices.shuffle(&mut thread_rng());
+        variable_indices.sort_by(|&a, &b| {
+            inequalities_count[b]
+                .cmp(&inequalities_count[a]) // descending on number of inequalities
+                .then(domain_sizes[a].cmp(&domain_sizes[b])) // ascending on domain size
+                .then(a.cmp(&b)) // ascending (original order)
+        });
 
         let mut inequality_set: HashSet<usize> = HashSet::default();
         let mut found_valid_clique = false;
@@ -99,8 +116,10 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
             inequality_set = HashSet::default();
             let _ = inequality_set.insert(var_index);
 
-            // for j in (i + 1)..self.variables.len() {
-            for &candidate_var in variable_indices.iter().skip(i + 1) {
+            for (j, &candidate_var) in variable_indices.iter().enumerate() {
+                if j == i {
+                    continue;
+                }
                 let mut all_unequal = true;
                 for set_member in inequality_set.clone() {
                     let var = self.get_equality(candidate_var, set_member);
@@ -409,7 +428,7 @@ fn tarjans_algorithm(graph: &Graph) -> (HashMap<usize, usize>, Vec<Vec<usize>>) 
     let mut node_to_scc_root = HashMap::default();
     let mut sccs = Vec::new();
 
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, reason = "todo: refactor in future")]
     fn strongconnect(
         node: usize,
         index: &mut i32,

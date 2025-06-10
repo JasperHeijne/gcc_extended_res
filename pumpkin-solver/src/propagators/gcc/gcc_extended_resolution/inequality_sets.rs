@@ -44,7 +44,7 @@ impl<Var> GccInequalitySets<Var> {
         for i in 0..vars.len() {
             for j in (i + 1)..vars.len() {
                 let literal = self.get_equality(vars[i], vars[j]);
-                reason.push(!predicate!(literal == 0));
+                reason.push(predicate!(literal == 0));
             }
         }
         reason

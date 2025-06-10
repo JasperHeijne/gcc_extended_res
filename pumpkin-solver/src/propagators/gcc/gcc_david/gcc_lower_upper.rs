@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use fnv::FnvBuildHasher;
 use fnv::FnvHashMap;
-use log::debug;
+// use log::debug;
 use log::warn;
 use petgraph::algo::has_path_connecting;
 use petgraph::graph::DiGraph;
@@ -251,30 +251,30 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
     ) -> crate::basic_types::PropagationStatusCP {
         #[cfg(debug_assertions)]
         {
-            self.variables.iter().for_each(|v| {
-                debug!(
-                    "var: u: {:?}, l: {:?}",
-                    context.upper_bound(v),
-                    context.lower_bound(v)
-                );
-            });
+            // self.variables.iter().for_each(|v| {
+            //     debug!(
+            //         "var: u: {:?}, l: {:?}",
+            //         context.upper_bound(v),
+            //         context.lower_bound(v)
+            //     );
+            // });
 
-            self.values.iter().for_each(|v| {
-                debug!(
-                    "value: v: {:?}, omin: {:?}, omax: {:?}",
-                    v.value, v.omin, v.omax
-                );
-            });
+            // self.values.iter().for_each(|v| {
+            //     debug!(
+            //         "value: v: {:?}, omin: {:?}, omax: {:?}",
+            //         v.value, v.omin, v.omax
+            //     );
+            // });
         }
 
         self.values.iter().try_for_each(|value| {
             let min = min_count(&self.variables, value.value, &context);
             let max = max_count(&self.variables, value.value, &context);
-            debug!("v: {:?}, min_count: {:?}, max_count: {:?}", value, min, max);
+            // debug!("v: {:?}, min_count: {:?}, max_count: {:?}", value, min, max);
 
             // If this is false, there is definitely no solution
             if min > value.omax || max < value.omin {
-                debug!("Inconsistency: {:?}", value);
+                // debug!("Inconsistency: {:?}", value);
                 // Constraint violation
                 return Err(Inconsistency::Conflict(conjunction_all_vars(
                     &context,
@@ -309,29 +309,29 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
 
         #[cfg(debug_assertions)]
         {
-            let dot = graph_to_dot(
-                &self.graph_data.graph,
-                &[],
-                &self.graph_data.variables_nodes,
-                &self.graph_data.values_nodes,
-                &vec![],
-            );
-            debug!("feasible flow: {}", dot);
+            // let dot = graph_to_dot(
+            //     &self.graph_data.graph,
+            //     &[],
+            //     &self.graph_data.variables_nodes,
+            //     &self.graph_data.values_nodes,
+            //     &vec![],
+            // );
+            // debug!("feasible flow: {}", dot);
         }
 
         // If feasible flow less than sum of lower bounds, then no solution exists
         let sum_lower_bounds: u32 = self.values.iter().map(|v| v.omin).sum::<u32>();
 
-        debug!(
-            "Feasible flow: {:?}, Sum lower bounds: {:?}",
-            max_flow, sum_lower_bounds
-        );
+        // debug!(
+        //     "Feasible flow: {:?}, Sum lower bounds: {:?}",
+        //     max_flow, sum_lower_bounds
+        // );
 
         if max_flow.capacity < sum_lower_bounds {
-            debug!(
-                "Inconsistency: flow {:?}, sum lower bounds: {:?}",
-                max_flow, sum_lower_bounds
-            );
+            // debug!(
+            //     "Inconsistency: flow {:?}, sum lower bounds: {:?}",
+            //     max_flow, sum_lower_bounds
+            // );
             return Err(Inconsistency::Conflict(conjunction_all_vars(
                 &context,
                 &self.variables,
@@ -340,7 +340,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
 
         self.update_value_edges_max_flow();
 
-        let (max_flow, edge_flows) = ford_fulkerson_lower_bounds::ford_fulkerson(
+        let (_max_flow, edge_flows) = ford_fulkerson_lower_bounds::ford_fulkerson(
             &self.graph_data.graph,
             self.graph_data.source,
             self.graph_data.sink,
@@ -359,19 +359,19 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
 
         #[cfg(debug_assertions)]
         {
-            let dot = graph_to_dot(
-                &self.graph_data.graph,
-                &[],
-                &self.graph_data.variables_nodes,
-                &self.graph_data.values_nodes,
-                &vec![],
-            );
-            debug!("max flow {}", dot);
+            // let dot = graph_to_dot(
+            //     &self.graph_data.graph,
+            //     &[],
+            //     &self.graph_data.variables_nodes,
+            //     &self.graph_data.values_nodes,
+            //     &vec![],
+            // );
+            // debug!("max flow {}", dot);
         }
 
         // Find maximum flow with lower bounds
 
-        debug!("Max flow: {:?}", max_flow);
+        // debug!("Max flow: {:?}", max_flow);
 
         // //edge_flows.iter().enumerate().for_each(|(i, e)| {
         // //    debug!("{}: {}", i, e);
@@ -439,7 +439,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
             }
         }
 
-        debug!("scc: {:?}", scc);
+        // debug!("scc: {:?}", scc);
 
         // Check if two nodes are in different SCCs
         let are_different =
@@ -528,13 +528,13 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
                     expl2 = naive_expl.clone();
                 }
 
-                debug!(
-                    "Removed: x{} = {}. expl_pred: {:?}, expl2: {:?}",
-                    var_index + 1,
-                    self.values[val_index].value,
-                    naive_expl,
-                    expl2
-                );
+                // debug!(
+                //     "Removed: x{} = {}. expl_pred: {:?}, expl2: {:?}",
+                //     var_index + 1,
+                //     self.values[val_index].value,
+                //     naive_expl,
+                //     expl2
+                // );
 
                 context.remove(
                     &self.variables[var_index],
@@ -542,28 +542,28 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
                     Into::<PropositionalConjunction>::into(expl2),
                 )?;
             } else {
-                debug!(
-                    "Kept: x{} = {}",
-                    var_index + 1,
-                    self.values[val_index].value
-                );
+                // debug!(
+                //     "Kept: x{} = {}",
+                //     var_index + 1,
+                //     self.values[val_index].value
+                // );
             }
         }
 
         #[cfg(debug_assertions)]
         {
             // let dot = Dot::new(&residual_graph);
-            let dot = graph_to_dot(
-                &residual_graph,
-                &scc,
-                self.graph_data.variables_nodes.as_ref(),
-                self.graph_data.values_nodes.as_ref(),
-                &inconsistent_edges,
-            );
-            debug!("residual graph: {}", dot);
+            // let dot = graph_to_dot(
+            //     &residual_graph,
+            //     &scc,
+            //     self.graph_data.variables_nodes.as_ref(),
+            //     self.graph_data.values_nodes.as_ref(),
+            //     &inconsistent_edges,
+            // );
+            // debug!("residual graph: {}", dot);
         }
 
-        debug!("Inconsistent edges: {:?}", inconsistent_edges);
+        // debug!("Inconsistent edges: {:?}", inconsistent_edges);
 
         // panic!("Test");
 
@@ -581,7 +581,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
         &mut self,
         context: &mut crate::engine::propagation::PropagatorInitialisationContext,
     ) -> Result<(), PropositionalConjunction> {
-        debug!("initialize root");
+        // debug!("initialize root");
 
         // Register all variables to domain change events.
         self.variables.iter().enumerate().for_each(|(i, x_i)| {
@@ -621,7 +621,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
         _local_id: LocalId,
         _event: crate::engine::opaque_domain_event::OpaqueDomainEvent,
     ) -> crate::engine::propagation::EnqueueDecision {
-        debug!("notify");
+        // debug!("notify");
         crate::engine::propagation::EnqueueDecision::Enqueue
     }
 
@@ -631,7 +631,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
         _local_id: LocalId,
         _event: crate::engine::opaque_domain_event::OpaqueDomainEvent,
     ) {
-        debug!("notify backtrack");
+        // debug!("notify backtrack");
     }
 
     fn log_statistics(&self, statistic_logger: crate::statistics::StatisticLogger) {

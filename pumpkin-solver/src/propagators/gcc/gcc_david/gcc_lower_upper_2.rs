@@ -1,4 +1,4 @@
-use log::debug;
+// use log::debug;
 
 use super::Values;
 use crate::basic_types::Inconsistency;
@@ -37,26 +37,26 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
         &self,
         mut context: crate::engine::propagation::PropagationContextMut,
     ) -> crate::basic_types::PropagationStatusCP {
-        self.variables.iter().for_each(|v| {
-            debug!(
-                "called. u: {:?}, l: {:?}",
-                context.upper_bound(v),
-                context.lower_bound(v)
-            );
-        });
+        // self.variables.iter().for_each(|v| {
+        //     debug!(
+        //         "called. u: {:?}, l: {:?}",
+        //         context.upper_bound(v),
+        //         context.lower_bound(v)
+        //     );
+        // });
 
         self.values.iter().try_for_each(|value| {
             let min = min_count(&self.variables, value.value, &context);
             let max = max_count(&self.variables, value.value, &context);
-            debug!("v: {:?}, min_count: {:?}, max_count: {:?}", value, min, max);
+            // debug!("v: {:?}, min_count: {:?}, max_count: {:?}", value, min, max);
 
             // If this is false, there is definitely no solution
             if min > value.omax {
                 // Constraint violation
-                debug!(
-                    "Inconsistency detected: min: {:?}, max: {:?}, value: {:?}",
-                    min, max, value
-                );
+                // debug!(
+                //     "Inconsistency detected: min: {:?}, max: {:?}, value: {:?}",
+                //     min, max, value
+                // );
                 return Err(Inconsistency::Conflict(
                     self.variables
                         .iter()
@@ -68,10 +68,10 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
 
             if max < value.omin {
                 // Constraint violation
-                debug!(
-                    "Inconsistency detected: min: {:?}, max: {:?}, value: {:?}",
-                    min, max, value
-                );
+                // debug!(
+                //     "Inconsistency detected: min: {:?}, max: {:?}, value: {:?}",
+                //     min, max, value
+                // );
                 return Err(Inconsistency::Conflict(
                     self.variables
                         .iter()
@@ -82,11 +82,11 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
             }
 
             self.variables.iter().try_for_each(|var| {
-                debug!(
-                    "var: u {:?}, l: {:?}",
-                    context.upper_bound(var),
-                    context.lower_bound(var)
-                );
+                // debug!(
+                //     "var: u {:?}, l: {:?}",
+                //     context.upper_bound(var),
+                //     context.lower_bound(var)
+                // );
                 if context.contains(var, value.value) {
                     // If assigning value $v$ to variable $x$ causes the min_count to be greater
                     // than the upper bound this would make problem inconsistent.
@@ -94,7 +94,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
                     if !context.is_fixed(var)
                         && min_count(&self.variables, value.value, &context) + 1 > value.omax
                     {
-                        debug!("  Removing val = {}", value.value);
+                        // debug!("  Removing val = {}", value.value);
                         let reason: PropositionalConjunction = self
                             .variables
                             .iter()
@@ -109,7 +109,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
                     // lower than the lower bound, then problem becomes
                     // inconsistent. Therefore  $D(x)=v$.
                     else if max_count(&self.variables, value.value, &context) - 1 < value.omin {
-                        debug!("  Setting val = {}", value.value);
+                        // debug!("  Setting val = {}", value.value);
                         let reason: PropositionalConjunction = self
                             .variables
                             .iter()
@@ -150,7 +150,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
         _local_id: LocalId,
         _event: crate::engine::opaque_domain_event::OpaqueDomainEvent,
     ) -> crate::engine::propagation::EnqueueDecision {
-        debug!("notify");
+        // debug!("notify");
         crate::engine::propagation::EnqueueDecision::Enqueue
     }
 
@@ -160,7 +160,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper2<Variable
         _local_id: LocalId,
         _event: crate::engine::opaque_domain_event::OpaqueDomainEvent,
     ) {
-        debug!("notify backtrack");
+        // debug!("notify backtrack");
     }
 
     fn log_statistics(&self, statistic_logger: crate::statistics::StatisticLogger) {

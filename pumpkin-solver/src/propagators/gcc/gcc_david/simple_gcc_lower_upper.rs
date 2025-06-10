@@ -1,4 +1,4 @@
-use log::debug;
+// use log::debug;
 
 use super::Values;
 use crate::basic_types::Inconsistency;
@@ -37,13 +37,13 @@ impl<Variable: IntegerVariable + 'static> Propagator for SimpleGCCLowerUpper<Var
         &self,
         context: crate::engine::propagation::PropagationContextMut,
     ) -> crate::basic_types::PropagationStatusCP {
-        self.variables.iter().for_each(|v| {
-            debug!(
-                "called. u: {:?}, l: {:?}",
-                context.upper_bound(v),
-                context.lower_bound(v)
-            );
-        });
+        // self.variables.iter().for_each(|v| {
+        //     debug!(
+        //         "called. u: {:?}, l: {:?}",
+        //         context.upper_bound(v),
+        //         context.lower_bound(v)
+        //     );
+        // });
 
         // Wait until the search fixes all values, and then check if the assignment satisfies the
         // constraint of the propagator.
@@ -63,7 +63,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for SimpleGCCLowerUpper<Var
             // explanation so that the solver knows this assignment is not valid?
             // TODO: Implement the explanation for an error.
 
-            debug!("all values fixed");
+            // debug!("all values fixed");
             return Err(Inconsistency::Conflict(conjunction_all_vars(
                 &context,
                 &self.variables,
@@ -104,7 +104,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for SimpleGCCLowerUpper<Var
         _local_id: LocalId,
         _event: crate::engine::opaque_domain_event::OpaqueDomainEvent,
     ) -> crate::engine::propagation::EnqueueDecision {
-        debug!("notify");
+        // debug!("notify");
         crate::engine::propagation::EnqueueDecision::Enqueue
     }
 
@@ -114,7 +114,7 @@ impl<Variable: IntegerVariable + 'static> Propagator for SimpleGCCLowerUpper<Var
         _local_id: LocalId,
         _event: crate::engine::opaque_domain_event::OpaqueDomainEvent,
     ) {
-        debug!("notify backtrack");
+        // debug!("notify backtrack");
     }
 
     fn synchronise(&mut self, _context: crate::engine::propagation::PropagationContext) {}

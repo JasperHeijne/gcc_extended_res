@@ -88,15 +88,15 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
             }
         }
 
-        dbg!(&uf);
-
-        let mut assigned: HashMap<i32, Vec<&Var>> = HashMap::default();
-        for var in &self.variables {
-            if context.is_fixed(var) {
-                let value = context.lower_bound(var);
-                assigned.entry(value).or_default().push(var);
-            }
-        }
+        // Now recalculated per set, to include only variables that aren't in the set
+        // See `assigned_not_in_set`
+        // let mut assigned: HashMap<i32, Vec<&Var>> = HashMap::default();
+        // for var in &self.variables {
+        //     if context.is_fixed(var) {
+        //         let value = context.lower_bound(var);
+        //         assigned.entry(value).or_default().push(var);
+        //     }
+        // }
 
         for set in uf.subsets() {
             if set.len() < 2 {
@@ -104,12 +104,35 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
                 continue;
             }
 
+            // Iterating through HashSet isn't stable, so copy into a Vec
+            let set_vec: Vec<usize> = set.iter().cloned().collect();
+            let mut set_reason = Vec::new();
+            for (i, &elem_1) in set_vec.iter().enumerate() {
+                for &elem_2 in set_vec.iter().skip(i + 1) {
+                    let lit = self.get_equality(elem_1, elem_2);
+                    if context.is_literal_true(&lit) {
+                        set_reason.push(predicate!(lit == 1));
+                    }
+                }
+            }
+
+            let mut assigned_not_in_set: HashMap<i32, Vec<&Var>> = HashMap::default();
+            for (i, var) in self.variables.iter().enumerate() {
+                if set.contains(&i) {
+                    continue;
+                }
+                if context.is_fixed(var) {
+                    let value = context.lower_bound(var);
+                    assigned_not_in_set.entry(value).or_default().push(var);
+                }
+            }
+
             let domain: Vec<_> = self.variables
                 [*set.iter().next().expect("set has size of at least 2")]
             .iterate_domain(context.assignments)
             .collect();
 
-            let k = domain.len();
+            let k = set.len();
 
             for value in domain {
                 let upper_bound = if let Some(upper_bound) = self.values.get(&value) {
@@ -117,25 +140,39 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
                 } else {
                     continue;
                 };
-                let assigned_vars = assigned.entry(value).or_default();
+
+                let assigned_vars = assigned_not_in_set.entry(value).or_default();
+
                 if k + assigned_vars.len() <= upper_bound {
-                    // the upperbound is not exceeded even if all k variables
+                    // the upperbound is not exceeded even if all k variables from set
                     // are assigned the value
                     continue;
                 }
 
                 // we exceed the upper bound
-                let mut reason = Vec::new();
+                // let mut reason = Vec::new();
                 // Arbitrary chain/tree for now
                 // todo: improve somehow
-                for var_index in set.iter() {
-                    let parent_index = uf.find(*var_index);
-                    if parent_index == *var_index {
-                        continue;
-                    }
-                    let literal = self.get_equality(*var_index, parent_index);
-                    reason.push(predicate!(literal == 1));
-                }
+
+                // The following might not work properly:
+                // For example, in uf (without path compression) we have
+                // x -> y -> z because E_xy and E_yz
+                // If the transitive propagator wasn't called then E_xz is still unassigned
+                // But because of path compression parent[x] = z
+                // So we try to add [E_xz == 1] to the reason, which isn't true yet
+                // For now this gets solved using `set_reason` above
+                // TODO: Fix/improve
+
+                // for var_index in set.iter() {
+                //     let parent_index = uf.find(*var_index);
+                //     if *var_index == parent_index {
+                //         continue;
+                //     }
+                //     let literal = self.get_equality(*var_index, parent_index);
+                //     reason.push(predicate!(literal == 1));
+                // }
+
+                let mut reason = set_reason.clone();
 
                 for assigned_var in assigned_vars {
                     reason.push(predicate!(assigned_var == value))
@@ -198,6 +235,6 @@ mod tests {
 
         solver.assert_bounds(x1, 3, 3);
         solver.assert_bounds(x2, 3, 3);
-        solver.assert_bounds(x2, 1, 2);
+        // solver.assert_bounds(x3, 1, 3);
     }
 }

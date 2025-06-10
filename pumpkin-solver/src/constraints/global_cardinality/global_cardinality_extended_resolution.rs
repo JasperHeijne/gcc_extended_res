@@ -17,8 +17,8 @@ struct GccExtendedResolution<Var: IntegerVariable + 'static> {
     equality_constraints: Vec<GccEquality<Var>>,
     exclusions: Vec<GccExclusion<Var>>,
     inequalities: Vec<GccInequality<Var>>,
-    upper_bound: GccUpperBound<Var>,
     inequality_sets: GccInequalitySets<Var>,
+    upper_bound: Option<GccUpperBound<Var>>,
 }
 
 impl<Var: IntegerVariable + 'static> GccExtendedResolution<Var> {
@@ -97,13 +97,15 @@ impl<Var: IntegerVariable + 'static> GccExtendedResolution<Var> {
             inequalities.push(inequality);
         }
 
+        // GCC inequality sets (greedy cliques)
+        let inequality_sets: GccInequalitySets<Var> =
+            GccInequalitySets::new(variables.clone(), equalities.clone());
+
         // GCC upper-bounds
         let upper_bound: GccUpperBound<Var> =
             GccUpperBound::new(variables.clone(), values.clone(), equalities.clone());
 
-        // GCC inequality sets (greedy cliques)
-        let inequality_sets: GccInequalitySets<Var> =
-            GccInequalitySets::new(variables.clone(), equalities.clone());
+        let upper_bound = Some(upper_bound);
 
         Self {
             intersections,
@@ -111,8 +113,8 @@ impl<Var: IntegerVariable + 'static> GccExtendedResolution<Var> {
             equality_constraints,
             exclusions,
             inequalities,
-            upper_bound,
             inequality_sets,
+            upper_bound,
         }
     }
 }
@@ -146,8 +148,10 @@ impl<Var: IntegerVariable + 'static> Constraint for GccExtendedResolution<Var> {
         self.inequalities
             .into_iter()
             .try_for_each(|c| c.post(solver, tag))?;
-        self.upper_bound.post(solver, tag)?;
-        self.inequality_sets.post(solver, tag)
+        self.inequality_sets.post(solver, tag)?;
+        self.upper_bound
+            .into_iter()
+            .try_for_each(|c| c.post(solver, tag))
     }
 
     fn implied_by(
@@ -171,7 +175,9 @@ impl<Var: IntegerVariable + 'static> Constraint for GccExtendedResolution<Var> {
         self.inequalities
             .into_iter()
             .try_for_each(|c| c.implied_by(solver, reif, tag))?;
-        self.upper_bound.implied_by(solver, reif, tag)?;
-        self.inequality_sets.implied_by(solver, reif, tag)
+        self.inequality_sets.implied_by(solver, reif, tag)?;
+        self.upper_bound
+            .into_iter()
+            .try_for_each(|c| c.implied_by(solver, reif, tag))
     }
 }

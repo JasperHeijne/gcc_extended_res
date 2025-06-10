@@ -88,13 +88,15 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
             }
         }
 
-        let mut assigned: HashMap<i32, Vec<&Var>> = HashMap::default();
-        for var in &self.variables {
-            if context.is_fixed(var) {
-                let value = context.lower_bound(var);
-                assigned.entry(value).or_default().push(var);
-            }
-        }
+        // Now recalculated per set, to include only variables that aren't in the set
+        // See `assigned_not_in_set`
+        // let mut assigned: HashMap<i32, Vec<&Var>> = HashMap::default();
+        // for var in &self.variables {
+        //     if context.is_fixed(var) {
+        //         let value = context.lower_bound(var);
+        //         assigned.entry(value).or_default().push(var);
+        //     }
+        // }
 
         for set in uf.subsets() {
             if set.len() < 2 {
@@ -102,12 +104,35 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
                 continue;
             }
 
+            // Iterating through HashSet isn't stable, so copy into a Vec
+            let set_vec: Vec<usize> = set.iter().cloned().collect();
+            let mut set_reason = Vec::new();
+            for (i, &elem_1) in set_vec.iter().enumerate() {
+                for &elem_2 in set_vec.iter().skip(i + 1) {
+                    let lit = self.get_equality(elem_1, elem_2);
+                    if context.is_literal_true(&lit) {
+                        set_reason.push(predicate!(lit == 1));
+                    }
+                }
+            }
+
+            let mut assigned_not_in_set: HashMap<i32, Vec<&Var>> = HashMap::default();
+            for (i, var) in self.variables.iter().enumerate() {
+                if set.contains(&i) {
+                    continue;
+                }
+                if context.is_fixed(var) {
+                    let value = context.lower_bound(var);
+                    assigned_not_in_set.entry(value).or_default().push(var);
+                }
+            }
+
             let domain: Vec<_> = self.variables
                 [*set.iter().next().expect("set has size of at least 2")]
             .iterate_domain(context.assignments)
             .collect();
 
-            let k = domain.len();
+            let k = set.len();
 
             for value in domain {
                 let upper_bound = if let Some(upper_bound) = self.values.get(&value) {
@@ -115,22 +140,39 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
                 } else {
                     continue;
                 };
-                let assigned_vars = assigned.entry(value).or_default();
+
+                let assigned_vars = assigned_not_in_set.entry(value).or_default();
+
                 if k + assigned_vars.len() <= upper_bound {
-                    // the upperbound is not exceeded even if all k variables
+                    // the upperbound is not exceeded even if all k variables from set
                     // are assigned the value
                     continue;
                 }
 
                 // we exceed the upper bound
-                let mut reason = Vec::new();
+                // let mut reason = Vec::new();
                 // Arbitrary chain/tree for now
                 // todo: improve somehow
-                for var_index in set.iter() {
-                    let parent_index = uf.find(*var_index);
-                    let literal = self.get_equality(*var_index, parent_index);
-                    reason.push(predicate!(literal == 1));
-                }
+
+                // The following might not work properly:
+                // For example, in uf (without path compression) we have
+                // x -> y -> z because E_xy and E_yz
+                // If the transitive propagator wasn't called then E_xz is still unassigned
+                // But because of path compression parent[x] = z
+                // So we try to add [E_xz == 1] to the reason, which isn't true yet
+                // For now this gets solved using `set_reason` above
+                // TODO: Fix/improve
+
+                // for var_index in set.iter() {
+                //     let parent_index = uf.find(*var_index);
+                //     if *var_index == parent_index {
+                //         continue;
+                //     }
+                //     let literal = self.get_equality(*var_index, parent_index);
+                //     reason.push(predicate!(literal == 1));
+                // }
+
+                let mut reason = set_reason.clone();
 
                 for assigned_var in assigned_vars {
                     reason.push(predicate!(assigned_var == value))
@@ -150,5 +192,49 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::GccUpperBound;
+    use crate::basic_types::HashMap;
+    use crate::engine::test_solver::TestSolver;
+    use crate::propagators::gcc_extended_resolution::generate_equalities;
+
+    #[test]
+    fn test_eliminate_from_set() {
+        let mut solver = TestSolver::default();
+
+        let x1 = solver.new_variable(1, 3);
+        let x2 = solver.new_variable(1, 3);
+        let x3 = solver.new_variable(1, 3);
+
+        let values: HashMap<i32, (usize, usize)> =
+            HashMap::from_iter([(1, (0, 1)), (2, (0, 1)), (3, (0, 2))]);
+
+        let equalities = generate_equalities(&mut solver, &[x1, x2, x3]);
+
+        let propagator = GccUpperBound {
+            variables: Box::new([x1, x2, x3]),
+            values,
+            equalities: equalities.clone(),
+        };
+
+        let propagator = solver.new_propagator(propagator).expect("no empty domains");
+        solver
+            .propagate_until_fixed_point(propagator)
+            .expect("should not conflict");
+
+        solver.set_literal(equalities[&(0, 1)], true).unwrap(); // x1 = x2
+
+        solver
+            .propagate_until_fixed_point(propagator)
+            .expect("should not conflict");
+
+        solver.assert_bounds(x1, 3, 3);
+        solver.assert_bounds(x2, 3, 3);
+        // solver.assert_bounds(x3, 1, 3);
     }
 }

@@ -4,6 +4,7 @@ use crate::basic_types::HashMap;
 use crate::propagators::gcc_extended_resolution::equality::GccEquality;
 use crate::propagators::gcc_extended_resolution::exclusion::GccExclusion;
 use crate::propagators::gcc_extended_resolution::inequality::GccInequality;
+use crate::propagators::gcc_extended_resolution::inequality_sets::GccInequalitySets;
 use crate::propagators::gcc_extended_resolution::intersection::GccIntersection;
 use crate::propagators::gcc_extended_resolution::transitive::GccTransitive;
 use crate::propagators::gcc_extended_resolution::upper_bound::GccUpperBound;
@@ -16,6 +17,7 @@ struct GccExtendedResolution<Var: IntegerVariable + 'static> {
     equality_constraints: Vec<GccEquality<Var>>,
     exclusions: Vec<GccExclusion<Var>>,
     inequalities: Vec<GccInequality<Var>>,
+    inequality_sets: GccInequalitySets<Var>,
     upper_bound: Option<GccUpperBound<Var>>,
 }
 
@@ -95,6 +97,10 @@ impl<Var: IntegerVariable + 'static> GccExtendedResolution<Var> {
             inequalities.push(inequality);
         }
 
+        // GCC inequality sets (greedy cliques)
+        let inequality_sets: GccInequalitySets<Var> =
+            GccInequalitySets::new(variables.clone(), equalities.clone());
+
         // GCC upper-bounds
         let upper_bound: GccUpperBound<Var> =
             GccUpperBound::new(variables.clone(), values.clone(), equalities.clone());
@@ -107,6 +113,7 @@ impl<Var: IntegerVariable + 'static> GccExtendedResolution<Var> {
             equality_constraints,
             exclusions,
             inequalities,
+            inequality_sets,
             upper_bound,
         }
     }
@@ -141,6 +148,7 @@ impl<Var: IntegerVariable + 'static> Constraint for GccExtendedResolution<Var> {
         self.inequalities
             .into_iter()
             .try_for_each(|c| c.post(solver, tag))?;
+        self.inequality_sets.post(solver, tag)?;
         self.upper_bound
             .into_iter()
             .try_for_each(|c| c.post(solver, tag))
@@ -167,6 +175,7 @@ impl<Var: IntegerVariable + 'static> Constraint for GccExtendedResolution<Var> {
         self.inequalities
             .into_iter()
             .try_for_each(|c| c.implied_by(solver, reif, tag))?;
+        self.inequality_sets.implied_by(solver, reif, tag)?;
         self.upper_bound
             .into_iter()
             .try_for_each(|c| c.implied_by(solver, reif, tag))

@@ -1,36 +1,41 @@
+use crate::basic_types::HashMap;
 use crate::engine::propagation::LocalId;
 use crate::engine::propagation::PropagationContextMut;
 use crate::engine::propagation::Propagator;
-use crate::engine::propagation::ReadDomains;
 use crate::engine::DomainEvents;
 use crate::predicate;
 use crate::predicates::PropositionalConjunction;
 use crate::variables::IntegerVariable;
+use crate::variables::Literal;
 
-pub(crate) struct GccConflicts<Var: IntegerVariable + 'static> {
+#[allow(
+    dead_code,
+    reason = "it might be possible to use equalities to make stronger reasoning"
+)]
+pub(crate) struct GccLowerboundConflicts<Var: IntegerVariable + 'static> {
     variables: Box<[Var]>,
+    equalities: HashMap<(usize, usize), Literal>,
     value: i32,
     min: usize,
-    max: usize,
 }
 
-impl<Var: IntegerVariable> GccConflicts<Var> {
+impl<Var: IntegerVariable> GccLowerboundConflicts<Var> {
     pub(crate) fn new(
         variables: impl IntoIterator<Item = Var>,
+        equalities: HashMap<(usize, usize), Literal>,
         value: i32,
         min: usize,
-        max: usize,
     ) -> Self {
         Self {
             variables: variables.into_iter().collect(),
+            equalities,
             value,
             min,
-            max,
         }
     }
 }
 
-impl<Var: IntegerVariable> Propagator for GccConflicts<Var> {
+impl<Var: IntegerVariable> Propagator for GccLowerboundConflicts<Var> {
     fn name(&self) -> &str {
         "GCC conflicts with extended resolution"
     }
@@ -50,39 +55,20 @@ impl<Var: IntegerVariable> Propagator for GccConflicts<Var> {
         &self,
         context: PropagationContextMut,
     ) -> crate::basic_types::PropagationStatusCP {
-        let relevant_variables = self
+        let irrelevant_variables = self
             .variables
             .iter()
-            .filter(|var| var.contains(context.assignments, self.value))
+            .filter(|var| !var.contains(context.assignments, self.value))
             .collect::<Vec<_>>();
 
         // If the number of variables with the domain is less than min, then the lower bound of the
         // value cannot be satisfied
-        if relevant_variables.len() < self.min {
+        let relevant_variables_count = self.variables.len() - irrelevant_variables.len();
+        if relevant_variables_count < self.min {
             // All other variables not having this value causes the conflict
-            let reason = self
-                .variables
-                .iter()
-                .filter(|var| !var.contains(context.assignments, self.value))
-                .map(|var| predicate!(var != self.value))
-                .collect();
-
-            return Err(crate::basic_types::Inconsistency::Conflict(
-                PropositionalConjunction::new(reason),
-            ));
-        }
-
-        let assigned_variables = self
-            .variables
-            .iter()
-            .filter(|var| context.is_fixed(*var) && var.contains(context.assignments, self.value))
-            .collect::<Vec<_>>();
-
-        // Number of assigned variables should not violate the upperbound
-        if assigned_variables.len() > self.max {
-            let reason = assigned_variables
+            let reason = irrelevant_variables
                 .into_iter()
-                .map(|var| predicate!(var == self.value))
+                .map(|var| predicate!(var != self.value))
                 .collect();
 
             return Err(crate::basic_types::Inconsistency::Conflict(
@@ -96,11 +82,12 @@ impl<Var: IntegerVariable> Propagator for GccConflicts<Var> {
 
 #[cfg(test)]
 mod tests {
-    use super::GccConflicts;
+    use super::GccLowerboundConflicts;
     use crate::engine::test_solver::TestSolver;
+    use crate::propagators::gcc_extended_resolution::generate_equalities;
 
     #[test]
-    fn assigned() {
+    fn too_few_with_domain() {
         let mut solver = TestSolver::default();
 
         let x1 = solver.new_variable(1, 15);
@@ -110,11 +97,12 @@ mod tests {
         let x5 = solver.new_variable(1, 15);
         let variables = vec![x1, x2, x3, x4, x5];
 
+        let equalities = generate_equalities(&mut solver, &variables);
+
         let value = 10;
         let min = 3;
-        let max = 5;
 
-        let propagator = GccConflicts::new(variables, value, min, max);
+        let propagator = GccLowerboundConflicts::new(variables, equalities, value, min);
 
         let propagator = solver.new_propagator(propagator).expect("no empty domains");
         solver

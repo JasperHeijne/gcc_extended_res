@@ -239,7 +239,7 @@ mod tests {
     }
 
     #[test]
-    fn unsat() {
+    fn too_many_assigned() {
         let mut solver = TestSolver::default();
 
         let x1 = solver.new_variable(1, 3);

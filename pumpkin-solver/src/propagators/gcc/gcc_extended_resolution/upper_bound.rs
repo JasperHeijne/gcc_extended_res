@@ -237,4 +237,36 @@ mod tests {
         solver.assert_bounds(x2, 3, 3);
         // solver.assert_bounds(x3, 1, 3);
     }
+
+    #[test]
+    fn unsat() {
+        let mut solver = TestSolver::default();
+
+        let x1 = solver.new_variable(1, 3);
+        let x2 = solver.new_variable(1, 3);
+        let x3 = solver.new_variable(1, 3);
+
+        let values: HashMap<i32, (usize, usize)> =
+            HashMap::from_iter([(1, (0, 2)), (2, (0, 2)), (3, (0, 2))]);
+
+        let equalities = generate_equalities(&mut solver, &[x1, x2, x3]);
+
+        let propagator = GccUpperBound {
+            variables: Box::new([x1, x2, x3]),
+            values,
+            equalities: equalities.clone(),
+        };
+
+        let propagator = solver.new_propagator(propagator).expect("no empty domains");
+        solver
+            .propagate_until_fixed_point(propagator)
+            .expect("should not conflict");
+
+        solver.set_literal(equalities[&(0, 1)], true).unwrap(); // x1 = x2
+        solver.set_literal(equalities[&(1, 2)], true).unwrap(); // x2 = x3
+
+        let _ = solver
+            .propagate_until_fixed_point(propagator)
+            .expect_err("no assignment is possible");
+    }
 }

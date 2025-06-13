@@ -1,6 +1,7 @@
 use super::global_cardinality_lower_upper::Values;
 use super::Constraint;
 use crate::basic_types::HashMap;
+use crate::propagators::gcc_extended_resolution::conflicts::GccConflicts;
 use crate::propagators::gcc_extended_resolution::equality::GccEquality;
 use crate::propagators::gcc_extended_resolution::exclusion::GccExclusion;
 use crate::propagators::gcc_extended_resolution::inequality::GccInequality;
@@ -18,6 +19,7 @@ struct GccExtendedResolution<Var: IntegerVariable + 'static> {
     exclusions: Vec<GccExclusion<Var>>,
     inequalities: Vec<GccInequality<Var>>,
     inequality_sets: GccInequalitySets<Var>,
+    conflicts: Vec<GccConflicts<Var>>,
     upper_bound: Option<GccUpperBound<Var>>,
 }
 
@@ -107,6 +109,18 @@ impl<Var: IntegerVariable + 'static> GccExtendedResolution<Var> {
 
         let upper_bound = Some(upper_bound);
 
+        let conflicts: Vec<GccConflicts<Var>> = values
+            .iter()
+            .map(|value| {
+                GccConflicts::new(
+                    variables.clone(),
+                    value.value,
+                    value.omin as usize,
+                    value.omax as usize,
+                )
+            })
+            .collect();
+
         Self {
             intersections,
             transitives,
@@ -114,6 +128,7 @@ impl<Var: IntegerVariable + 'static> GccExtendedResolution<Var> {
             exclusions,
             inequalities,
             inequality_sets,
+            conflicts,
             upper_bound,
         }
     }
@@ -149,6 +164,9 @@ impl<Var: IntegerVariable + 'static> Constraint for GccExtendedResolution<Var> {
             .into_iter()
             .try_for_each(|c| c.post(solver, tag))?;
         self.inequality_sets.post(solver, tag)?;
+        self.conflicts
+            .into_iter()
+            .try_for_each(|c| c.post(solver, tag))?;
         self.upper_bound
             .into_iter()
             .try_for_each(|c| c.post(solver, tag))
@@ -176,6 +194,9 @@ impl<Var: IntegerVariable + 'static> Constraint for GccExtendedResolution<Var> {
             .into_iter()
             .try_for_each(|c| c.implied_by(solver, reif, tag))?;
         self.inequality_sets.implied_by(solver, reif, tag)?;
+        self.conflicts
+            .into_iter()
+            .try_for_each(|c| c.implied_by(solver, reif, tag))?;
         self.upper_bound
             .into_iter()
             .try_for_each(|c| c.implied_by(solver, reif, tag))

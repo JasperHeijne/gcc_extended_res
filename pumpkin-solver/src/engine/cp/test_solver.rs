@@ -159,6 +159,16 @@ impl TestSolver {
         self.assignments.remove_value_from_domain(var, value, None)
     }
 
+    pub(crate) fn set_bounds(
+        &mut self,
+        var: DomainId,
+        lower: i32,
+        upper: i32,
+    ) -> Result<(), EmptyDomain> {
+        self.assignments.tighten_lower_bound(var, lower, None)?;
+        self.assignments.tighten_upper_bound(var, upper, None)
+    }
+
     pub(crate) fn set_literal(
         &mut self,
         literal: Literal,

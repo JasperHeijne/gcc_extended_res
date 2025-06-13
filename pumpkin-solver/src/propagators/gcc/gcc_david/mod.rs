@@ -98,6 +98,7 @@ fn max_count<Variable: IntegerVariable>(
 }
 
 #[cfg(debug_assertions)]
+#[allow(dead_code, reason = "debug method, kept in case its needed to debug")]
 /// Helper method to convert a graph to a dot string.
 /// The graph is optionally colored according to the strongly connected components.
 /// If supplied, the variable nodes are placed in the same rank, as well as the value nodes.

@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use log::info;
 use pumpkin_solver::branching::branchers::dynamic_brancher::DynamicBrancher;
 use pumpkin_solver::branching::branchers::independent_variable_value_brancher::IndependentVariableValueBrancher;
 use pumpkin_solver::branching::Brancher;
@@ -26,7 +27,21 @@ fn create_from_search_strategy(
     context: &mut CompilationContext,
     append_default_search: bool,
 ) -> Result<DynamicBrancher, FlatZincError> {
-    let mut brancher = match strategy {
+    let extended_variables = context
+        .extended_equality_variables
+        .values()
+        .cloned()
+        .collect::<Vec<_>>();
+
+    info!("Number of extended variables: {}", extended_variables.len());
+
+    let mut brancher = create_search_over_propositional_variables(
+        &extended_variables,
+        &VariableSelectionStrategy::InputOrder,
+        &ValueSelectionStrategy::InDomainMax,
+    );
+
+    let main_brancher = match strategy {
         Search::Bool(SearchStrategy {
             variables,
             variable_selection_strategy,
@@ -90,6 +105,8 @@ fn create_from_search_strategy(
             DynamicBrancher::new(vec![])
         }
     };
+
+    brancher.add_brancher(Box::new(main_brancher));
 
     if append_default_search {
         // MiniZinc specification specifies that we need to ensure that all variables are

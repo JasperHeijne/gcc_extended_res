@@ -179,6 +179,7 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
                 if !self.variables[var_ind].contains(context.assignments, x) {
                     continue;
                 }
+                #[allow(clippy::map_entry, reason = "two inserts inside")]
                 if !values_to_ids.contains_key(&x) {
                     let _ = values_to_ids.insert(x, next_value_id);
                     let _ = ids_to_values.insert(next_value_id, x);

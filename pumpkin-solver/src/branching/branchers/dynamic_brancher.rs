@@ -158,8 +158,8 @@ impl Brancher for DynamicBrancher {
     fn is_restart_pointless(&mut self) -> bool {
         // We return whether all of the branchers up and until this one are static; if this is not
         // the case then restarting could be useful!
-        let current_brancher_index = min(self.brancher_index, self.branchers.len() - 1);
-        self.branchers[..=current_brancher_index]
+        let current_brancher_index = min(self.brancher_index + 1, self.branchers.len());
+        self.branchers[..current_brancher_index]
             .iter_mut()
             .all(|brancher| brancher.is_restart_pointless())
     }

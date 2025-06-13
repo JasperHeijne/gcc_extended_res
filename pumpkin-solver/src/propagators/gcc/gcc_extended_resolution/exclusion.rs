@@ -33,7 +33,7 @@ impl<Var: IntegerVariable> Propagator for GccExclusion<Var> {
         context: &mut crate::engine::propagation::PropagatorInitialisationContext,
     ) -> Result<(), crate::predicates::PropositionalConjunction> {
         let _ = context.register(self.literal, DomainEvents::UPPER_BOUND, LocalId::from(0));
-        let _ = context.register(self.left.clone(), DomainEvents::ASSIGN, LocalId::from(0));
+        let _ = context.register(self.left.clone(), DomainEvents::ASSIGN, LocalId::from(1));
 
         Ok(())
     }

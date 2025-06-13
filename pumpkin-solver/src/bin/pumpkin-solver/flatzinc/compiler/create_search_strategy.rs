@@ -38,7 +38,7 @@ fn create_from_search_strategy(
     let mut brancher = create_search_over_propositional_variables(
         &extended_variables,
         &VariableSelectionStrategy::InputOrder,
-        &ValueSelectionStrategy::InDomainMax,
+        &ValueSelectionStrategy::InDomainRandom,
     );
 
     let main_brancher = match strategy {

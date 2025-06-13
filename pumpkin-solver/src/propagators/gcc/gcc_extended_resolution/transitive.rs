@@ -29,7 +29,7 @@ impl Propagator for GccTransitive {
     ) -> Result<(), crate::predicates::PropositionalConjunction> {
         // We only care when it is set to 1, i.e. lowerbound increases from 0 to 1.
         let _ = context.register(self.xy, DomainEvents::LOWER_BOUND, LocalId::from(0));
-        let _ = context.register(self.yz, DomainEvents::LOWER_BOUND, LocalId::from(0));
+        let _ = context.register(self.yz, DomainEvents::LOWER_BOUND, LocalId::from(1));
 
         Ok(())
     }

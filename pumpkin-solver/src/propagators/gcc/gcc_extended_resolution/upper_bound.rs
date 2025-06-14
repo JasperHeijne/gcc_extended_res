@@ -205,7 +205,9 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
 
                 let mut reason = set_reason.clone();
 
-                for assigned_var in assigned_vars {
+                let required_assigned_number = upper_bound - k.min(upper_bound);
+
+                for &assigned_var in assigned_vars.iter().take(required_assigned_number) {
                     reason.push(predicate!(assigned_var == value))
                 }
 
@@ -232,9 +234,10 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
 
 #[cfg(test)]
 mod tests {
-
     use super::GccUpperBound;
+    use super::*;
     use crate::basic_types::HashMap;
+    use crate::conjunction;
     use crate::engine::test_solver::TestSolver;
     use crate::propagators::gcc_extended_resolution::generate_equalities;
 
@@ -303,5 +306,35 @@ mod tests {
         let _ = solver
             .propagate_until_fixed_point(propagator)
             .expect_err("no assignment is possible");
+    }
+
+    #[test]
+    fn test_not_all_assigned_vars_in_explanation() {
+        let mut solver = TestSolver::default();
+
+        let x1 = solver.new_variable(1, 2);
+        let x2 = solver.new_variable(1, 2);
+        let x3 = solver.new_variable(2, 2);
+
+        let values: HashMap<i32, (usize, usize)> = HashMap::from_iter([(1, (0, 10)), (2, (0, 1))]);
+
+        let equalities = generate_equalities(&mut solver, &[x1, x2, x3]);
+
+        solver.set_literal(equalities[&(0, 1)], true).unwrap(); // x1 = x2
+
+        let propagator = GccUpperBound {
+            variables: Box::new([x1, x2, x3]),
+            values,
+            equalities: equalities.clone(),
+        };
+
+        let _ = solver
+            .new_propagator(propagator)
+            .expect("Expected no errors");
+        solver.assert_bounds(x1, 1, 1);
+        solver.assert_bounds(x2, 1, 1);
+
+        let reason = solver.get_reason_int(predicate!(x1 != 2));
+        assert_eq!(conjunction!([equalities[&(0, 1)] == 1]), reason);
     }
 }

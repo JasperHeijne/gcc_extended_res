@@ -64,10 +64,7 @@ impl<Var: IntegerVariable> GccUpperBound<Var> {
         stack.push(start_node);
         let _ = visited.insert(start_node);
 
-        while !stack.is_empty() {
-            let cur = stack
-                .pop()
-                .expect("There is an element if the stack isn't empty");
+        while let Some(cur) = stack.pop() {
             if let Some(neighbours) = graph.get(&cur) {
                 for &n in neighbours {
                     if visited.contains(&n) {

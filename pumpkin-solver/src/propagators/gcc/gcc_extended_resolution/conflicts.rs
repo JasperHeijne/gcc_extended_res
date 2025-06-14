@@ -85,7 +85,7 @@ impl<Var: IntegerVariable> Propagator for GccLowerboundConflicts<Var> {
         }
 
         let relevant_variables_indices: HashSet<usize> = (0..self.variables.len())
-            .filter(|&i| self.variables[i].contains(&context.assignments, self.value))
+            .filter(|&i| self.variables[i].contains(context.assignments, self.value))
             .collect();
 
         let mut edge_count = 0;

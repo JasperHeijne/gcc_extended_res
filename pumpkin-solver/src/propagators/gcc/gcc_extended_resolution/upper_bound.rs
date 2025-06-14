@@ -193,6 +193,10 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
 
         Ok(())
     }
+
+    fn priority(&self) -> u32 {
+        2
+    }
 }
 
 #[cfg(test)]

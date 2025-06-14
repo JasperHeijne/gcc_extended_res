@@ -61,4 +61,8 @@ impl<Var: IntegerVariable> Propagator for GccIntersection<Var> {
 
         Ok(())
     }
+
+    fn priority(&self) -> u32 {
+        0
+    }
 }

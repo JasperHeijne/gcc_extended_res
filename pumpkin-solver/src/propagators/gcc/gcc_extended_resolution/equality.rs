@@ -53,4 +53,8 @@ impl<Var: IntegerVariable> Propagator for GccEquality<Var> {
 
         Ok(())
     }
+
+    fn priority(&self) -> u32 {
+        0
+    }
 }

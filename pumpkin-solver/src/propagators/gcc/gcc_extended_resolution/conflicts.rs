@@ -78,6 +78,10 @@ impl<Var: IntegerVariable> Propagator for GccLowerboundConflicts<Var> {
 
         Ok(())
     }
+
+    fn priority(&self) -> u32 {
+        0
+    }
 }
 
 #[cfg(test)]

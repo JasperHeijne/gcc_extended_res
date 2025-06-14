@@ -47,4 +47,8 @@ impl Propagator for GccTransitive {
 
         Ok(())
     }
+
+    fn priority(&self) -> u32 {
+        0
+    }
 }

@@ -61,6 +61,10 @@ impl<Var: IntegerVariable> Propagator for GccInequality<Var> {
 
         Ok(())
     }
+
+    fn priority(&self) -> u32 {
+        1
+    }
 }
 
 fn domain_description<Var: IntegerVariable>(

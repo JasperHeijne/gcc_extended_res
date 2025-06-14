@@ -451,8 +451,10 @@ impl CompilationContext<'_> {
         // This loop wastes half of its iterations, but it is still O(n^2)
         for (i, a) in vars.iter().enumerate() {
             for (j, b) in vars.iter().enumerate() {
+                log::trace!("{:?}", ((i, a), (j, b)));
+
                 // Ensure a has lower id than b
-                if a.id >= b.id {
+                if a.id > b.id {
                     continue;
                 }
                 let literal = self
@@ -460,7 +462,18 @@ impl CompilationContext<'_> {
                     .entry((*a, *b))
                     .or_insert_with(|| self.solver.new_literal());
 
+                log::trace!("  -> {:?}", literal);
+
                 let _ = local_map.insert((i, j), *literal);
+            }
+        }
+
+        // Sanity check
+        for i in 0..vars.len() {
+            for j in 0..vars.len() {
+                let left = local_map.contains_key(&(i, j));
+                let right = local_map.contains_key(&(j, i));
+                assert!(left || right, "exactly one should be set in {i} and {j}");
             }
         }
 

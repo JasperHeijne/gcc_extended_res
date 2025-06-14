@@ -10,6 +10,7 @@ for model in "$DIR/models"/*.mzn; do
   # Extract the base name without extension (e.g., community-detection, nsite, vaccine)
   name="$(basename "$model" .mzn)"
 
+  rm -rf "$DIR/input/$name/"
   mkdir -p "$DIR/input/$name/"
 
   for inst_dir in "$DIR/instances_subset"/*"$name"*; do
@@ -31,5 +32,5 @@ for model in "$DIR/models"/*.mzn; do
 done
 
 for pid in $pids; do
-  wait $pid
+  wait "$pid"
 done

@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
-set -eux
+set -eu
+
+trap 'echo "Interrupted"; exit 1' INT
 
 # Determine the directory of this script (experiments folder)
 DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -14,14 +16,18 @@ for model in "$DIR/models"/*.mzn; do
 
   mkdir -p "$DIR/output/$name/"
 
-  for input in "$DIR/input/$name"/*.fzn; do
+  input_dir="$DIR/input/$name"
+  [ -d "$input_dir" ] || continue
+  [ -z "$(ls -A "$input_dir" 2>/dev/null)" ] && continue
+
+  for input in "$input_dir"/*.fzn; do
     instance="$(basename "$input" .fzn)"
 
-    (
-      rm "$DIR/output/$name/$instance.log" || true
-      target/release/pumpkin-solver -s "$input" --gcc-propagation-method extended-resolution > "$DIR/output/$name/$instance.log"
-      echo "$name: $instance"
-    )
+
+    rm "$DIR/output/$name/$instance.log" || true
+    target/release/pumpkin-solver -s "$input" --gcc-propagation-method extended-resolution > "$DIR/output/$name/$instance.log"
+    echo "$name: $instance"
+
     # pids="$pids $!"
   done
 done

@@ -2,6 +2,8 @@ use reunion::UnionFind;
 use reunion::UnionFindTrait;
 
 use crate::basic_types::HashMap;
+use crate::basic_types::HashSet;
+use crate::engine::predicates::predicate::Predicate;
 use crate::engine::propagation::LocalId;
 use crate::engine::propagation::PropagationContextMut;
 use crate::engine::propagation::Propagator;
@@ -49,6 +51,38 @@ impl<Var: IntegerVariable> GccUpperBound<Var> {
             .or(self.equalities.get(&(y, x)))
             .expect("E_{x,y} or E_{y,x} must be defined")
     }
+
+    fn get_set_reason(
+        &self,
+        graph: &HashMap<usize, Vec<usize>>,
+        start_node: usize,
+    ) -> Vec<Predicate> {
+        let mut reason = Vec::new();
+        let mut stack = Vec::new();
+        let mut visited: HashSet<usize> = HashSet::default();
+
+        stack.push(start_node);
+        let _ = visited.insert(start_node);
+
+        while !stack.is_empty() {
+            let cur = stack
+                .pop()
+                .expect("There is an element if the stack isn't empty");
+            if let Some(neighbours) = graph.get(&cur) {
+                for &n in neighbours {
+                    if visited.contains(&n) {
+                        continue;
+                    }
+                    stack.push(n);
+                    let _ = visited.insert(n);
+                    let eq_literal = self.get_equality(cur, n);
+                    reason.push(predicate!(eq_literal == 1));
+                }
+            }
+        }
+
+        reason
+    }
 }
 
 impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
@@ -82,9 +116,13 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
     ) -> crate::basic_types::PropagationStatusCP {
         let mut uf: UnionFind<usize> = UnionFind::with_capacity(self.variables.len());
 
+        let mut equality_graph: HashMap<usize, Vec<usize>> = HashMap::default();
+
         for ((i, j), literal) in &self.equalities {
             if context.is_literal_true(literal) {
                 uf.union(*i, *j);
+                equality_graph.entry(*i).or_default().push(*j);
+                equality_graph.entry(*j).or_default().push(*i);
             }
         }
 
@@ -104,17 +142,10 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
                 continue;
             }
 
-            // Iterating through HashSet isn't stable, so copy into a Vec
-            let set_vec: Vec<usize> = set.iter().cloned().collect();
-            let mut set_reason = Vec::new();
-            for (i, &elem_1) in set_vec.iter().enumerate() {
-                for &elem_2 in set_vec.iter().skip(i + 1) {
-                    let lit = self.get_equality(elem_1, elem_2);
-                    if context.is_literal_true(&lit) {
-                        set_reason.push(predicate!(lit == 1));
-                    }
-                }
-            }
+            let set_reason = self.get_set_reason(
+                &equality_graph,
+                *set.iter().next().expect("set has size of at least 2"),
+            );
 
             let mut assigned_not_in_set: HashMap<i32, Vec<&Var>> = HashMap::default();
             for (i, var) in self.variables.iter().enumerate() {

@@ -117,7 +117,7 @@ where
         }
     } else if vertex == edge.target() {
         // forward edge
-        return *edge.weight() - flow;
+        *edge.weight() - flow
     } else {
         let end_point = NodeIndexable::to_index(&network, vertex);
         panic!("Illegal endpoint {end_point}");

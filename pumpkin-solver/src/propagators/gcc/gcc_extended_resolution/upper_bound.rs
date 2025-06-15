@@ -2,6 +2,8 @@ use reunion::UnionFind;
 use reunion::UnionFindTrait;
 
 use crate::basic_types::HashMap;
+use crate::basic_types::HashSet;
+use crate::engine::predicates::predicate::Predicate;
 use crate::engine::propagation::LocalId;
 use crate::engine::propagation::PropagationContextMut;
 use crate::engine::propagation::Propagator;
@@ -49,6 +51,35 @@ impl<Var: IntegerVariable> GccUpperBound<Var> {
             .or(self.equalities.get(&(y, x)))
             .expect("E_{x,y} or E_{y,x} must be defined")
     }
+
+    fn get_set_reason(
+        &self,
+        graph: &HashMap<usize, Vec<usize>>,
+        start_node: usize,
+    ) -> Vec<Predicate> {
+        let mut reason = Vec::new();
+        let mut stack = Vec::new();
+        let mut visited: HashSet<usize> = HashSet::default();
+
+        stack.push(start_node);
+        let _ = visited.insert(start_node);
+
+        while let Some(cur) = stack.pop() {
+            if let Some(neighbours) = graph.get(&cur) {
+                for &n in neighbours {
+                    if visited.contains(&n) {
+                        continue;
+                    }
+                    stack.push(n);
+                    let _ = visited.insert(n);
+                    let eq_literal = self.get_equality(cur, n);
+                    reason.push(predicate!(eq_literal == 1));
+                }
+            }
+        }
+
+        reason
+    }
 }
 
 impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
@@ -82,9 +113,13 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
     ) -> crate::basic_types::PropagationStatusCP {
         let mut uf: UnionFind<usize> = UnionFind::with_capacity(self.variables.len());
 
+        let mut equality_graph: HashMap<usize, Vec<usize>> = HashMap::default();
+
         for ((i, j), literal) in &self.equalities {
             if context.is_literal_true(literal) {
                 uf.union(*i, *j);
+                equality_graph.entry(*i).or_default().push(*j);
+                equality_graph.entry(*j).or_default().push(*i);
             }
         }
 
@@ -104,17 +139,10 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
                 continue;
             }
 
-            // Iterating through HashSet isn't stable, so copy into a Vec
-            let set_vec: Vec<usize> = set.iter().cloned().collect();
-            let mut set_reason = Vec::new();
-            for (i, &elem_1) in set_vec.iter().enumerate() {
-                for &elem_2 in set_vec.iter().skip(i + 1) {
-                    let lit = self.get_equality(elem_1, elem_2);
-                    if context.is_literal_true(&lit) {
-                        set_reason.push(predicate!(lit == 1));
-                    }
-                }
-            }
+            let set_reason = self.get_set_reason(
+                &equality_graph,
+                *set.iter().next().expect("set has size of at least 2"),
+            );
 
             let mut assigned_not_in_set: HashMap<i32, Vec<&Var>> = HashMap::default();
             for (i, var) in self.variables.iter().enumerate() {
@@ -174,7 +202,9 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
 
                 let mut reason = set_reason.clone();
 
-                for assigned_var in assigned_vars {
+                let required_assigned_number = upper_bound - k.min(upper_bound);
+
+                for &assigned_var in assigned_vars.iter().take(required_assigned_number) {
                     reason.push(predicate!(assigned_var == value))
                 }
 
@@ -193,13 +223,18 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
 
         Ok(())
     }
+
+    fn priority(&self) -> u32 {
+        2
+    }
 }
 
 #[cfg(test)]
 mod tests {
-
     use super::GccUpperBound;
+    use super::*;
     use crate::basic_types::HashMap;
+    use crate::conjunction;
     use crate::engine::test_solver::TestSolver;
     use crate::propagators::gcc_extended_resolution::generate_equalities;
 
@@ -268,5 +303,35 @@ mod tests {
         let _ = solver
             .propagate_until_fixed_point(propagator)
             .expect_err("no assignment is possible");
+    }
+
+    #[test]
+    fn test_not_all_assigned_vars_in_explanation() {
+        let mut solver = TestSolver::default();
+
+        let x1 = solver.new_variable(1, 2);
+        let x2 = solver.new_variable(1, 2);
+        let x3 = solver.new_variable(2, 2);
+
+        let values: HashMap<i32, (usize, usize)> = HashMap::from_iter([(1, (0, 10)), (2, (0, 1))]);
+
+        let equalities = generate_equalities(&mut solver, &[x1, x2, x3]);
+
+        solver.set_literal(equalities[&(0, 1)], true).unwrap(); // x1 = x2
+
+        let propagator = GccUpperBound {
+            variables: Box::new([x1, x2, x3]),
+            values,
+            equalities: equalities.clone(),
+        };
+
+        let _ = solver
+            .new_propagator(propagator)
+            .expect("Expected no errors");
+        solver.assert_bounds(x1, 1, 1);
+        solver.assert_bounds(x2, 1, 1);
+
+        let reason = solver.get_reason_int(predicate!(x1 != 2));
+        assert_eq!(conjunction!([equalities[&(0, 1)] == 1]), reason);
     }
 }

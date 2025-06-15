@@ -46,22 +46,29 @@ impl<Var: IntegerVariable + 'static> GccExtendedResolution<Var> {
         }
 
         // E_{x,y} = 1 and E_{y, z} = 1 => E_{x,z} = 1
+        // E_{x,y} = 1 and E_{y, z} = 0 => E_{x,z} = 0
         // Naive O(n^3) initialization
         let mut transitives: Vec<GccTransitive> = Vec::new();
         for i in 0..variables.len() {
-            for j in 0..variables.len() {
+            for j in (i + 1)..variables.len() {
+                let conclusion = *equalities
+                    .get(&(i, j))
+                    .or(equalities.get(&(j, i)))
+                    .expect("E_{i,j} or E_{j,i} must be defined");
                 for k in 0..variables.len() {
-                    if equalities.contains_key(&(i, j))
-                        && equalities.contains_key(&(j, k))
-                        && equalities.contains_key(&(i, k))
-                    {
-                        let xy = equalities[&(i, j)];
-                        let yz = equalities[&(j, k)];
-                        let xz = equalities[&(i, k)];
-
-                        let transitive = GccTransitive::new(xy, yz, xz);
-                        transitives.push(transitive);
+                    if k == i || k == j {
+                        continue;
                     }
+                    let left = *equalities
+                        .get(&(i, k))
+                        .or(equalities.get(&(k, i)))
+                        .expect("E_{i,k} or E_{k,i} must be defined");
+                    let right = *equalities
+                        .get(&(j, k))
+                        .or(equalities.get(&(k, j)))
+                        .expect("E_{j,k} or E_{k,j} must be defined");
+                    let transitive = GccTransitive::new(left, right, conclusion);
+                    transitives.push(transitive);
                 }
             }
         }

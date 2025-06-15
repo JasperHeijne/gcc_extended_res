@@ -51,4 +51,8 @@ impl<Var: IntegerVariable> Propagator for GccExclusion<Var> {
 
         Ok(())
     }
+
+    fn priority(&self) -> u32 {
+        0
+    }
 }

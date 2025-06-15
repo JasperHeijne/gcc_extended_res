@@ -300,6 +300,10 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
 
         Ok(())
     }
+
+    fn priority(&self) -> u32 {
+        3
+    }
 }
 
 /// Graph struct which we use to run Ford-Fulkerson

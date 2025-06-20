@@ -1,3 +1,4 @@
+use crate::basic_types::moving_averages::moving_average::MovingAverage;
 use crate::basic_types::HashMap;
 use crate::basic_types::HashSet;
 use crate::basic_types::Inconsistency;
@@ -228,12 +229,25 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
             }
 
             let mut reason = self.get_inequality_explanation(&chosen_variables);
+
+            context
+                .solver_statistics
+                .gcc_extended_statistics
+                .average_num_of_equality_vars_in_explanation
+                .add_term(reason.len() as u64);
+
             let all_diff_reason: Vec<Predicate> = included_vars
                 .iter()
                 .map(|&i| self.variables[chosen_variables[i]].clone())
                 .flat_map(|var| var.describe_domain(context.assignments))
                 .collect();
             reason.extend(all_diff_reason);
+
+            context
+                .solver_statistics
+                .gcc_extended_statistics
+                .average_size_of_extended_explanations
+                .add_term(reason.len() as u64);
 
             context
                 .solver_statistics
@@ -276,6 +290,13 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
                         }
 
                         let mut reason = self.get_inequality_explanation(&chosen_variables);
+
+                        context
+                            .solver_statistics
+                            .gcc_extended_statistics
+                            .average_num_of_equality_vars_in_explanation
+                            .add_term(reason.len() as u64);
+
                         let mut connected: HashSet<usize> = HashSet::default();
 
                         // Find all nodes connected to the value
@@ -295,6 +316,12 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
                             .solver_statistics
                             .gcc_extended_statistics
                             .inequality_sets_propagations += 1;
+
+                        context
+                            .solver_statistics
+                            .gcc_extended_statistics
+                            .average_size_of_extended_explanations
+                            .add_term(reason.len() as u64);
 
                         PropagationContextMut::remove(
                             &mut context,

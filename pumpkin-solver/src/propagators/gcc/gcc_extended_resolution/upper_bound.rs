@@ -1,6 +1,7 @@
 use reunion::UnionFind;
 use reunion::UnionFindTrait;
 
+use crate::basic_types::moving_averages::MovingAverage;
 use crate::basic_types::HashMap;
 use crate::basic_types::HashSet;
 use crate::engine::predicates::predicate::Predicate;
@@ -214,6 +215,18 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
                         .solver_statistics
                         .gcc_extended_statistics
                         .upper_bound_propagations += 1;
+
+                    context
+                        .solver_statistics
+                        .gcc_extended_statistics
+                        .average_num_of_equality_vars_in_explanation
+                        .add_term(set_reason.len() as u64);
+
+                    context
+                        .solver_statistics
+                        .gcc_extended_statistics
+                        .average_size_of_extended_explanations
+                        .add_term(reason.len() as u64);
 
                     PropagationContextMut::remove(
                         &mut context,

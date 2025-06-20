@@ -53,7 +53,7 @@ create_statistics_struct!(
     GccExtendedStatistics {
         /// Number of propagations made by GccUpperBound
         upper_bound_propagations: u64,
-        /// Number of propagations made by
+        /// Number of propagations made by GccInequalitySets
         inequality_sets_propagations: u64,
         /// Number of conflicts detected by GccLowerboundConflicts, specifically by the bound on
         /// MIS size
@@ -65,5 +65,15 @@ create_statistics_struct!(
         regin_conflicts: u64,
         /// Number of propagations made by GCCLowerUpper
         regin_propagations: u64,
+
+        /// Number of propagations made to ensure consistency of equality variables
+        /// (GccEquality, GccExclusion, GccInequality, GccIntersection, GccTransitive)
+        equality_propagations: u64,
+
+        /// How many equality variables we use in explanations created by GccUpperBound, GccInequalitySets and GccLowerboundConflicts
+        average_num_of_equality_vars_in_explanation: CumulativeMovingAverage<u64>,
+        /// Average size of explanations for GccUpperBound, GccInequalitySets and GccLowerboundConflicts
+        /// Allows comparison with `average_num_of_equality_vars_in_explanation`
+        average_size_of_extended_explanations: CumulativeMovingAverage<u64>,
     }
 );

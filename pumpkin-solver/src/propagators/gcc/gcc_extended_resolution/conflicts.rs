@@ -1,3 +1,4 @@
+use crate::basic_types::moving_averages::moving_average::MovingAverage;
 use crate::basic_types::HashMap;
 use crate::basic_types::HashSet;
 use crate::engine::propagation::LocalId;
@@ -117,6 +118,7 @@ impl<Var: IntegerVariable> Propagator for GccLowerboundConflicts<Var> {
             (0.5 + (0.25 + n * n - n - 2.0 * edge_count as f32).sqrt()).floor() as usize;
 
         if mis_size_upper_bound < self.min {
+            let equality_reason_size = reason.len();
             for var in irrelevant_variables {
                 reason.push(predicate!(var != self.value));
             }
@@ -130,6 +132,18 @@ impl<Var: IntegerVariable> Propagator for GccLowerboundConflicts<Var> {
                 .solver_statistics
                 .gcc_extended_statistics
                 .extended_propagators_conflicts += 1;
+
+            context
+                .solver_statistics
+                .gcc_extended_statistics
+                .average_num_of_equality_vars_in_explanation
+                .add_term(equality_reason_size as u64);
+
+            context
+                .solver_statistics
+                .gcc_extended_statistics
+                .average_size_of_extended_explanations
+                .add_term(reason.len() as u64);
 
             return Err(crate::basic_types::Inconsistency::Conflict(
                 PropositionalConjunction::new(reason),

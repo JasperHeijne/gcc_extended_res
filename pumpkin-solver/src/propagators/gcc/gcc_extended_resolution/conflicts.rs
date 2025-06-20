@@ -79,6 +79,11 @@ impl<Var: IntegerVariable> Propagator for GccLowerboundConflicts<Var> {
                 .map(|var| predicate!(var != self.value))
                 .collect();
 
+            context
+                .solver_statistics
+                .gcc_extended_statistics
+                .extended_propagators_conflicts += 1;
+
             return Err(crate::basic_types::Inconsistency::Conflict(
                 PropositionalConjunction::new(reason),
             ));
@@ -115,6 +120,16 @@ impl<Var: IntegerVariable> Propagator for GccLowerboundConflicts<Var> {
             for var in irrelevant_variables {
                 reason.push(predicate!(var != self.value));
             }
+
+            context
+                .solver_statistics
+                .gcc_extended_statistics
+                .max_independent_set_conflicts += 1;
+
+            context
+                .solver_statistics
+                .gcc_extended_statistics
+                .extended_propagators_conflicts += 1;
 
             return Err(crate::basic_types::Inconsistency::Conflict(
                 PropositionalConjunction::new(reason),

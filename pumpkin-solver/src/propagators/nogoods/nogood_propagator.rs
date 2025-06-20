@@ -31,7 +31,6 @@ use crate::engine::ConstraintSatisfactionSolver;
 use crate::engine::EventSink;
 use crate::engine::IntDomainEvent;
 use crate::engine::Lbd;
-use crate::engine::SolverStatistics;
 use crate::predicate;
 use crate::propagators::nogoods::Nogood;
 use crate::pumpkin_assert_advanced;
@@ -892,7 +891,7 @@ impl NogoodPropagator {
         &mut self,
         nogood: Vec<Predicate>,
         context: &mut PropagationContextMut,
-        statistics: &mut SolverStatistics,
+        // statistics: &mut SolverStatistics,
     ) {
         // We treat unit nogoods in a special way by adding it as a permanent nogood at the
         // root-level; this is essentially the same as adding a predicate at the root level
@@ -912,7 +911,8 @@ impl NogoodPropagator {
             .lbd_helper
             .compute_lbd(&nogood.as_slice()[1..], context.assignments());
 
-        statistics
+        context
+            .solver_statistics
             .learned_clause_statistics
             .average_lbd
             .add_term(lbd as u64);
@@ -1484,6 +1484,7 @@ mod tests {
                 &mut solver.reason_store,
                 &mut solver.semantic_minimiser,
                 propagator,
+                &mut solver.solver_statistics,
             );
 
             downcast_to_nogood_propagator(propagator, &mut solver.propagator_store)
@@ -1525,6 +1526,7 @@ mod tests {
                 &mut solver.reason_store,
                 &mut solver.semantic_minimiser,
                 propagator,
+                &mut solver.solver_statistics,
             );
 
             downcast_to_nogood_propagator(propagator, &mut solver.propagator_store)

@@ -210,6 +210,10 @@ impl<Var: IntegerVariable> Propagator for GccUpperBound<Var> {
 
                 for var_index in set.iter() {
                     let var = &self.variables[*var_index];
+                    context
+                        .solver_statistics
+                        .gcc_extended_statistics
+                        .upper_bound_propagations += 1;
 
                     PropagationContextMut::remove(
                         &mut context,

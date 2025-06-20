@@ -234,6 +234,12 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
                 .flat_map(|var| var.describe_domain(context.assignments))
                 .collect();
             reason.extend(all_diff_reason);
+
+            context
+                .solver_statistics
+                .gcc_extended_statistics
+                .extended_propagators_conflicts += 1;
+
             return Err(Inconsistency::Conflict(PropositionalConjunction::new(
                 reason,
             )));
@@ -284,6 +290,11 @@ impl<Var: IntegerVariable + 'static> Propagator for GccInequalitySets<Var> {
                                 );
                             }
                         }
+
+                        context
+                            .solver_statistics
+                            .gcc_extended_statistics
+                            .inequality_sets_propagations += 1;
 
                         PropagationContextMut::remove(
                             &mut context,

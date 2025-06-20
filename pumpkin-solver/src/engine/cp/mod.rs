@@ -28,6 +28,7 @@ mod tests {
     use crate::engine::propagation::PropagationContextMut;
     use crate::engine::propagation::PropagatorId;
     use crate::engine::reason::ReasonStore;
+    use crate::engine::SolverStatistics;
     use crate::engine::TrailedValues;
 
     #[test]
@@ -40,12 +41,14 @@ mod tests {
         assert_eq!(reason_store.len(), 0);
         {
             let mut semantic_miniser = SemanticMinimiser::default();
+            let mut statistics = SolverStatistics::default();
             let mut context = PropagationContextMut::new(
                 &mut trailed_values,
                 &mut assignments,
                 &mut reason_store,
                 &mut semantic_miniser,
                 PropagatorId(0),
+                &mut statistics,
             );
 
             let result = context.set_lower_bound(&domain, 2, conjunction!());
@@ -65,12 +68,14 @@ mod tests {
         assert_eq!(reason_store.len(), 0);
         {
             let mut semantic_miniser = SemanticMinimiser::default();
+            let mut statistics = SolverStatistics::default();
             let mut context = PropagationContextMut::new(
                 &mut trailed_values,
                 &mut assignments,
                 &mut reason_store,
                 &mut semantic_miniser,
                 PropagatorId(0),
+                &mut statistics,
             );
 
             let result = context.set_upper_bound(&domain, 15, conjunction!());
@@ -90,12 +95,14 @@ mod tests {
         assert_eq!(reason_store.len(), 0);
         {
             let mut semantic_miniser = SemanticMinimiser::default();
+            let mut statistics = SolverStatistics::default();
             let mut context = PropagationContextMut::new(
                 &mut trailed_values,
                 &mut assignments,
                 &mut reason_store,
                 &mut semantic_miniser,
                 PropagatorId(0),
+                &mut statistics,
             );
 
             let result = context.remove(&domain, 15, conjunction!());

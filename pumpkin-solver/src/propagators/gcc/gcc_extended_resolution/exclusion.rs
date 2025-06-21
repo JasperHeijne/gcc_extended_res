@@ -44,7 +44,15 @@ impl<Var: IntegerVariable> Propagator for GccExclusion<Var> {
     ) -> crate::basic_types::PropagationStatusCP {
         if context.is_literal_false(&self.literal) && context.is_fixed(&self.left) {
             let value = context.lower_bound(&self.left);
+            if !self.right.contains(context.assignments, value) {
+                return Ok(());
+            }
             let reason = conjunction!([self.literal == 0] & [self.left == value]);
+
+            context
+                .solver_statistics
+                .gcc_extended_statistics
+                .equality_propagations += 1;
 
             PropagationContextMut::remove(&mut context, &self.right, value, reason)?;
         }

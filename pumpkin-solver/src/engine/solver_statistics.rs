@@ -8,7 +8,9 @@ create_statistics_struct!(
         /// Core statistics of the solver engine (e.g. the number of decisions)
         engine_statistics: EngineStatistics,
         /// The statistics related to clause learning
-        learned_clause_statistics: LearnedClauseStatistics
+        learned_clause_statistics: LearnedClauseStatistics,
+        /// The statistics related to GCC extended resolution
+        gcc_extended_statistics: GccExtendedStatistics
     }
 );
 
@@ -45,3 +47,33 @@ create_statistics_struct!(
         /// The average literal-block distance (LBD) metric for newly added learned nogoods
         average_lbd: CumulativeMovingAverage<u64>,
 });
+
+create_statistics_struct!(
+    // Statistics for GCC extended resolution propagators
+    GccExtendedStatistics {
+        /// Number of propagations made by GccUpperBound
+        upper_bound_propagations: u64,
+        /// Number of propagations made by GccInequalitySets
+        inequality_sets_propagations: u64,
+        /// Number of conflicts detected by GccLowerboundConflicts, specifically by the bound on
+        /// MIS size
+        max_independent_set_conflicts: u64,
+        /// Number of conflicts detected by GccInequalitySets and GccLowerboundConflicts (also
+        /// including the ones without building MIS)
+        extended_propagators_conflicts: u64,
+        /// Number of conflicts detected by GCCLowerUpper
+        regin_conflicts: u64,
+        /// Number of propagations made by GCCLowerUpper
+        regin_propagations: u64,
+
+        /// Number of propagations made to ensure consistency of equality variables
+        /// (GccEquality, GccExclusion, GccInequality, GccIntersection, GccTransitive)
+        equality_propagations: u64,
+
+        /// How many equality variables we use in explanations created by GccUpperBound, GccInequalitySets and GccLowerboundConflicts
+        average_num_of_equality_vars_in_explanation: CumulativeMovingAverage<u64>,
+        /// Average size of explanations for GccUpperBound, GccInequalitySets and GccLowerboundConflicts
+        /// Allows comparison with `average_num_of_equality_vars_in_explanation`
+        average_size_of_extended_explanations: CumulativeMovingAverage<u64>,
+    }
+);

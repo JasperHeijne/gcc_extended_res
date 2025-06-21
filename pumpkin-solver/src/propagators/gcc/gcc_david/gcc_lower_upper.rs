@@ -15,7 +15,7 @@ use super::ford_fulkerson_lower_bounds::BoundedCapacity;
 use super::Values;
 use crate::basic_types::HashSet;
 use crate::basic_types::Inconsistency;
-use crate::create_statistics_struct;
+// use crate::create_statistics_struct;
 use crate::engine::cp::propagation::contexts::PropagationContextWithTrailedValues;
 use crate::engine::propagation::LocalId;
 use crate::engine::propagation::Propagator;
@@ -276,6 +276,11 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
             if min > value.omax || max < value.omin {
                 // debug!("Inconsistency: {:?}", value);
                 // Constraint violation
+                context
+                    .solver_statistics
+                    .gcc_extended_statistics
+                    .regin_conflicts += 1;
+
                 return Err(Inconsistency::Conflict(conjunction_all_vars(
                     &context,
                     &self.variables,
@@ -332,6 +337,11 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
             //     "Inconsistency: flow {:?}, sum lower bounds: {:?}",
             //     max_flow, sum_lower_bounds
             // );
+            context
+                .solver_statistics
+                .gcc_extended_statistics
+                .regin_conflicts += 1;
+
             return Err(Inconsistency::Conflict(conjunction_all_vars(
                 &context,
                 &self.variables,
@@ -536,6 +546,11 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
                 //     expl2
                 // );
 
+                context
+                    .solver_statistics
+                    .gcc_extended_statistics
+                    .regin_propagations += 1;
+
                 context.remove(
                     &self.variables[var_index],
                     self.values[val_index].value,
@@ -634,13 +649,13 @@ impl<Variable: IntegerVariable + 'static> Propagator for GCCLowerUpper<Variable>
         // debug!("notify backtrack");
     }
 
-    fn log_statistics(&self, statistic_logger: crate::statistics::StatisticLogger) {
-        create_statistics_struct!(Statistics { test: u32 });
+    // fn log_statistics(&self, statistic_logger: crate::statistics::StatisticLogger) {
+    //     create_statistics_struct!(Statistics { test: u32 });
 
-        let statistics = Statistics { test: 0 };
+    //     let statistics = Statistics { test: 0 };
 
-        statistic_logger.log_statistic(format!("{statistics:?}"));
-    }
+    //     statistic_logger.log_statistic(format!("{statistics:?}"));
+    // }
 
     fn priority(&self) -> u32 {
         3

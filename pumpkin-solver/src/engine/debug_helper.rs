@@ -19,6 +19,7 @@ use crate::engine::cp::Assignments;
 use crate::engine::propagation::PropagationContextMut;
 use crate::engine::propagation::Propagator;
 use crate::engine::propagation::PropagatorId;
+use crate::engine::SolverStatistics;
 
 #[derive(Copy, Clone)]
 pub(crate) struct DebugDyn<'a> {
@@ -75,12 +76,14 @@ impl DebugHelper {
 
             let mut reason_store = Default::default();
             let mut semantic_minimiser = SemanticMinimiser::default();
+            let mut statistics = SolverStatistics::default();
             let context = PropagationContextMut::new(
                 &mut trailed_values_clone,
                 &mut assignments_clone,
                 &mut reason_store,
                 &mut semantic_minimiser,
                 PropagatorId(propagator_id as u32),
+                &mut statistics,
             );
             let propagation_status_cp = propagator.debug_propagate_from_scratch(context);
 
@@ -230,12 +233,14 @@ impl DebugHelper {
                 // Now propagate using the debug propagation method.
                 let mut reason_store = Default::default();
                 let mut semantic_minimiser = SemanticMinimiser::default();
+                let mut statistics = SolverStatistics::default();
                 let context = PropagationContextMut::new(
                     &mut trailed_values_clone,
                     &mut assignments_clone,
                     &mut reason_store,
                     &mut semantic_minimiser,
                     propagator_id,
+                    &mut statistics,
                 );
                 let debug_propagation_status_cp = propagator.debug_propagate_from_scratch(context);
 
@@ -330,6 +335,7 @@ impl DebugHelper {
                 //  now propagate using the debug propagation method
                 let mut reason_store = Default::default();
                 let mut semantic_minimiser = SemanticMinimiser::default();
+                let mut statistics = SolverStatistics::default();
 
                 // Note that it might take multiple iterations before the conflict is reached due
                 // to the assumption that some propagators make on that they are not idempotent!
@@ -347,6 +353,7 @@ impl DebugHelper {
                         &mut reason_store,
                         &mut semantic_minimiser,
                         propagator_id,
+                        &mut statistics,
                     );
                     let debug_propagation_status_cp =
                         propagator.debug_propagate_from_scratch(context);
@@ -404,12 +411,14 @@ impl DebugHelper {
             //  now propagate using the debug propagation method
             let mut reason_store = Default::default();
             let mut semantic_minimiser = SemanticMinimiser::default();
+            let mut statistics = SolverStatistics::default();
             let context = PropagationContextMut::new(
                 &mut trailed_values_clone,
                 &mut assignments_clone,
                 &mut reason_store,
                 &mut semantic_minimiser,
                 propagator_id,
+                &mut statistics,
             );
             let debug_propagation_status_cp = propagator.debug_propagate_from_scratch(context);
             assert!(
@@ -465,12 +474,14 @@ impl DebugHelper {
             if outcome.is_ok() {
                 let mut reason_store = Default::default();
                 let mut semantic_minimiser = SemanticMinimiser::default();
+                let mut statistics = SolverStatistics::default();
                 let context = PropagationContextMut::new(
                     &mut trailed_values_clone,
                     &mut assignments_clone,
                     &mut reason_store,
                     &mut semantic_minimiser,
                     propagator_id,
+                    &mut statistics,
                 );
                 let debug_propagation_status_cp = propagator.debug_propagate_from_scratch(context);
 

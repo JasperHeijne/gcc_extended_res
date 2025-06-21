@@ -8,6 +8,7 @@ use crate::engine::variables::IntegerVariable;
 use crate::engine::variables::Literal;
 use crate::engine::Assignments;
 use crate::engine::EmptyDomain;
+use crate::engine::SolverStatistics;
 use crate::engine::TrailedInteger;
 use crate::engine::TrailedValues;
 use crate::pumpkin_assert_simple;
@@ -59,6 +60,8 @@ pub(crate) struct PropagationContextMut<'a> {
     pub(crate) propagator_id: PropagatorId,
     pub(crate) semantic_minimiser: &'a mut SemanticMinimiser,
     reification_literal: Option<Literal>,
+
+    pub(crate) solver_statistics: &'a mut SolverStatistics,
 }
 
 impl<'a> PropagationContextMut<'a> {
@@ -68,6 +71,7 @@ impl<'a> PropagationContextMut<'a> {
         reason_store: &'a mut ReasonStore,
         semantic_minimiser: &'a mut SemanticMinimiser,
         propagator_id: PropagatorId,
+        solver_statistics: &'a mut SolverStatistics,
     ) -> Self {
         PropagationContextMut {
             trailed_values,
@@ -76,6 +80,7 @@ impl<'a> PropagationContextMut<'a> {
             propagator_id,
             semantic_minimiser,
             reification_literal: None,
+            solver_statistics,
         }
     }
 

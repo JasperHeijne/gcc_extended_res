@@ -42,12 +42,22 @@ impl<Var: IntegerVariable> Propagator for GccEquality<Var> {
         &self,
         mut context: PropagationContextMut,
     ) -> crate::basic_types::PropagationStatusCP {
+        if context.is_literal_true(&self.literal) {
+            return Ok(());
+        }
+
         if context.is_fixed(&self.left)
             && context.is_fixed(&self.right)
             && context.lower_bound(&self.left) == context.lower_bound(&self.right)
         {
             let value = context.lower_bound(&self.left);
             let reason = conjunction!([self.left == value] & [self.right == value]);
+
+            context
+                .solver_statistics
+                .gcc_extended_statistics
+                .equality_propagations += 1;
+
             PropagationContextMut::assign_literal(&mut context, &self.literal, true, reason)?;
         }
 

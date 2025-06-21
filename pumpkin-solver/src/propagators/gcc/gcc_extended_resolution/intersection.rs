@@ -55,6 +55,12 @@ impl<Var: IntegerVariable> Propagator for GccIntersection<Var> {
         for value in left {
             if !right.contains(&value) {
                 let reason = conjunction!([self.literal == 1] & [self.right != value]);
+
+                context
+                    .solver_statistics
+                    .gcc_extended_statistics
+                    .equality_propagations += 1;
+
                 PropagationContextMut::remove(&mut context, &self.left, value, reason)?;
             }
         }

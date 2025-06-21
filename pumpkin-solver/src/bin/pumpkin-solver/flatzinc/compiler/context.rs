@@ -454,7 +454,7 @@ impl CompilationContext<'_> {
                 log::trace!("{:?}", ((i, a), (j, b)));
 
                 // Ensure a has lower id than b
-                if a.id > b.id {
+                if a.id >= b.id {
                     continue;
                 }
                 let literal = self
@@ -471,6 +471,9 @@ impl CompilationContext<'_> {
         // Sanity check
         for i in 0..vars.len() {
             for j in 0..vars.len() {
+                if i == j {
+                    continue;
+                }
                 let left = local_map.contains_key(&(i, j));
                 let right = local_map.contains_key(&(j, i));
                 assert!(left || right, "exactly one should be set in {i} and {j}");

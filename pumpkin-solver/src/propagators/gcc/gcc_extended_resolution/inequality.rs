@@ -2,6 +2,7 @@ use crate::basic_types::HashSet;
 use crate::engine::propagation::LocalId;
 use crate::engine::propagation::PropagationContextMut;
 use crate::engine::propagation::Propagator;
+use crate::engine::propagation::ReadDomains;
 use crate::engine::DomainEvents;
 use crate::predicate;
 use crate::predicates::PropositionalConjunction;
@@ -43,6 +44,10 @@ impl<Var: IntegerVariable> Propagator for GccInequality<Var> {
         &self,
         mut context: PropagationContextMut,
     ) -> crate::basic_types::PropagationStatusCP {
+        if context.is_literal_false(&self.literal) {
+            return Ok(());
+        }
+
         let left: HashSet<_> = self.left.iterate_domain(context.assignments).collect();
         let right: HashSet<_> = self.right.iterate_domain(context.assignments).collect();
 
@@ -50,6 +55,11 @@ impl<Var: IntegerVariable> Propagator for GccInequality<Var> {
             let mut reason = Vec::new();
             domain_description(&mut reason, &self.left, context.assignments);
             domain_description(&mut reason, &self.right, context.assignments);
+
+            context
+                .solver_statistics
+                .gcc_extended_statistics
+                .equality_propagations += 1;
 
             PropagationContextMut::assign_literal(
                 &mut context,

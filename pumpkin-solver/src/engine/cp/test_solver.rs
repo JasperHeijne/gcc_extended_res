@@ -24,6 +24,7 @@ use crate::engine::variables::Literal;
 use crate::engine::Assignments;
 use crate::engine::DomainEvents;
 use crate::engine::EmptyDomain;
+use crate::engine::SolverStatistics;
 use crate::engine::WatchListCP;
 use crate::predicates::PropositionalConjunction;
 
@@ -36,6 +37,7 @@ pub(crate) struct TestSolver {
     pub semantic_minimiser: SemanticMinimiser,
     pub trailed_values: TrailedValues,
     watch_list: WatchListCP,
+    pub solver_statistics: SolverStatistics,
 }
 
 impl Default for TestSolver {
@@ -47,6 +49,7 @@ impl Default for TestSolver {
             semantic_minimiser: Default::default(),
             watch_list: Default::default(),
             trailed_values: Default::default(),
+            solver_statistics: Default::default(),
         };
         // We allocate space for the zero-th dummy variable at the root level of the assignments.
         solver.watch_list.grow();
@@ -84,6 +87,7 @@ impl TestSolver {
             &mut self.reason_store,
             &mut self.semantic_minimiser,
             PropagatorId(0),
+            &mut self.solver_statistics,
         );
         self.propagator_store[id].propagate(context)?;
 
@@ -191,6 +195,7 @@ impl TestSolver {
             &mut self.reason_store,
             &mut self.semantic_minimiser,
             PropagatorId(0),
+            &mut self.solver_statistics,
         );
         self.propagator_store[propagator].propagate(context)
     }
@@ -210,6 +215,7 @@ impl TestSolver {
                     &mut self.reason_store,
                     &mut self.semantic_minimiser,
                     PropagatorId(0),
+                    &mut self.solver_statistics,
                 );
                 self.propagator_store[propagator].propagate(context)?;
                 self.notify_propagator(propagator);

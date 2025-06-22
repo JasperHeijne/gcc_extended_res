@@ -1,6 +1,8 @@
 import os
 import re
 import matplotlib.pyplot as plt
+import shutil
+
 import numpy as np
 
 root_folder = r"C:\Users\jaspe\Documents\TuDelft\Reasearch_Intelligent_Decision_Making\pumpkin-gcc_extended_res\gcc_extended_res\experiments\draft_runs\runs\vaccine"
@@ -49,7 +51,7 @@ patterns = {
 }
 
 # Initialize stats dict
-stats = {method: [] for method in method_map.values()}
+stats = {method: {} for method in method_map.values()}
 
 # Extraction helper
 def extract_stats(filepath):
@@ -75,22 +77,19 @@ for i in present_indices:
         if filename in method_map:
             method = method_map[filename]
             file_path = os.path.join(instance_folder, filename)
-            stats[method].append(extract_stats(file_path))
+            stats[method][i] = extract_stats(file_path)
 
 def get_conflict_outliers(method_x, method_y, top_k=5):
-    x_vals = [run["conflicts"] if run["conflicts"] is not None else 0.0001 for run in stats[method_x]]
-    y_vals = [run["conflicts"] if run["conflicts"] is not None else 0.0001 for run in stats[method_y]]
+    common_indices = list(set(stats[method_x].keys()) & set(stats[method_y].keys()))
+    x_vals = [stats[method_x][i]["conflicts"] if stats[method_x][i]["conflicts"] is not None else 0.0001 for i in common_indices]
+    y_vals = [stats[method_y][i]["conflicts"] if stats[method_y][i]["conflicts"] is not None else 0.0001 for i in common_indices]
 
-    assert len(x_vals) == len(y_vals), "Mismatched instance count"
-
-    # Compute absolute difference from y = x
     distances = [abs(x - y) for x, y in zip(x_vals, y_vals)]
-
-    # Sort indices based on distance
     sorted_indices = sorted(range(len(distances)), key=lambda i: distances[i], reverse=True)
 
-    # Return top-k outliers with their values
-    return [(i, x_vals[i], y_vals[i], distances[i]) for i in sorted_indices[:top_k]]
+    # Return instance index + data
+    return [(common_indices[i], x_vals[i], y_vals[i], distances[i]) for i in sorted_indices[:top_k]]
+
 
 def plot_conflict_outliers(method_x, method_y, top_k=5, save=True):
     outliers = get_conflict_outliers(method_x, method_y, top_k)
@@ -138,5 +137,33 @@ for idx, x_val, y_val, diff in outliers:
     print(f"Instance {idx}: Extended Regin = {x_val}, Regin = {y_val}, |diff| = {diff}")
 
 print(f"Extended Regin better for instances: {extended}, Plain Regin better for instances: {plain}")
+# Source root where the original instance folders are
+source_root = root_folder
+
+# Destination folders
+extended_folder = r"C:\Users\jaspe\Documents\TuDelft\Reasearch_Intelligent_Decision_Making\pumpkin-gcc_extended_res\gcc_extended_res\experiments\extremes_vaccine\extended_better"
+plain_folder = r"C:\Users\jaspe\Documents\TuDelft\Reasearch_Intelligent_Decision_Making\pumpkin-gcc_extended_res\gcc_extended_res\experiments\extremes_vaccine\plain_better"
+
+# Ensure destination folders exist
+os.makedirs(extended_folder, exist_ok=True)
+os.makedirs(plain_folder, exist_ok=True)
+
+def copy_instance_folder(instance_idx, destination_folder):
+    src = os.path.join(source_root, f"instance_{instance_idx}")
+    dst = os.path.join(destination_folder, f"instance_{instance_idx}")
+    if os.path.exists(dst):
+        shutil.rmtree(dst)  # Remove if already exists to avoid duplication or merge issues
+    shutil.copytree(src, dst)
+
+# Copy folders where extended regin is better
+for idx in extended:
+    copy_instance_folder(idx, extended_folder)
+
+# Copy folders where plain regin is better
+for idx in plain:
+    copy_instance_folder(idx, plain_folder)
+
+print("Finished copying extreme instance folders.")
+
 
 plot_conflict_outliers("Extended Regin", "Regin", top_k=20, save=False)

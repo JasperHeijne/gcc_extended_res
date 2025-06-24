@@ -364,6 +364,10 @@ def plot_points(
         ax = axes[i]
 
         # points_per_marker = {"x": [], "o": []}
+        linestyles = {
+            method_a: "-",
+            method_b: "--",
+        }
         points_per = {}
         # marker_titles = {"x": "Instances (timed out)", "o": "Instances"}
         # x = []
@@ -406,13 +410,28 @@ def plot_points(
         #     ax.scatter(x, y, color=c, marker=marker, label=marker_titles[marker])
         for (method_index, n, marker), points in points_per.items():
             method = [method_a, method_b][method_index]
+            linestyle = linestyles[method]
             points.sort(key=lambda k: k[0])
             (x, y, c) = list(zip(*points))
             color = ["orange", "blue", "green", "red"][n - 5]
-            ax.plot(x, y, c=f"C{n - 5}", marker=marker)
+            ax.plot(x, y, c=f"C{n - 5}", marker=marker, linestyle=linestyle)
 
-        ax.plot([], [], c="black", marker="o", label=f"{method_a}")
-        ax.plot([], [], c="black", marker="^", label=f"{method_b}")
+        ax.plot(
+            [],
+            [],
+            c="black",
+            marker="o",
+            label=f"{method_a}",
+            linestyle=linestyles[method_a],
+        )
+        ax.plot(
+            [],
+            [],
+            c="black",
+            marker="^",
+            label=f"{method_b}",
+            linestyle=linestyles[method_b],
+        )
 
         # for _x, _y, _c, _m in zip(x, y, color, marker):
         #     ax.scatter(_x, _y, c=_c, marker=_m)
